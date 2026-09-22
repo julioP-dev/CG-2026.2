@@ -8,25 +8,16 @@ public class Transformacao {
     /**
      * Converte coordenadas do dispositivo para NDC [0,1].
      *
-     * @param dispositivo ponto em coordenadas do dispositivo
+     * @param input coordenada de entrada do dispositivo
      * @param largura largura do display em pixels
      * @param altura altura do display em pixels
      * @return ponto em NDC [0,1]
      */
-    public static Ponto dcToNdc01(
-            Ponto dispositivo,
-            int largura,
-            int altura) {
-
+    public static Ponto inpToNdc01(Ponto input, int largura, int altura) {
         validarDimensoes(largura, altura);
 
-        double x =
-                dispositivo.getX()
-                        / (largura - 1);
-
-        double y =
-                dispositivo.getY()
-                        / (altura - 1);
+        double x = input.getX() / (largura - 1);
+        double y = input.getY() / (altura - 1);
 
         return new Ponto(x, y);
     }
@@ -39,20 +30,11 @@ public class Transformacao {
      * @param altura altura do display em pixels
      * @return ponto em coordenadas do dispositivo
      */
-    public static Ponto ndc01ToDc(
-            Ponto ndc,
-            int largura,
-            int altura) {
-
+    public static Ponto ndc01ToDc(Ponto ndc, int largura, int altura) {
         validarDimensoes(largura, altura);
 
-        double x =
-                ndc.getX()
-                        * (largura - 1);
-
-        double y =
-                ndc.getY()
-                        * (altura - 1);
+        double x = ndc.getX() * (largura - 1);
+        double y = ndc.getY() * (altura - 1);
 
         return new Ponto(x, y);
     }
@@ -60,27 +42,16 @@ public class Transformacao {
     /**
      * Converte coordenadas do dispositivo para NDC [-1,1].
      *
-     * @param dispositivo ponto em coordenadas do dispositivo
-     * @param largura largura do display em pixels
-     * @param altura altura do display em pixels
+     * @param input coordenada de entrada do dispositivo
+     * @param largura largura do dispositivo
+     * @param altura altura do dispositivo
      * @return ponto em NDC [-1,1]
      */
-    public static Ponto dcToNdc11(
-            Ponto dispositivo,
-            int largura,
-            int altura) {
-
+    public static Ponto inpToNdc11(Ponto input, int largura, int altura) {
         validarDimensoes(largura, altura);
 
-        double x =
-                2.0 * dispositivo.getX()
-                        / (largura - 1)
-                        - 1.0;
-
-        double y =
-                2.0 * dispositivo.getY()
-                        / (altura - 1)
-                        - 1.0;
+        double x = 2.0 * input.getX() / (largura - 1) - 1.0;
+        double y = 2.0 * input.getY() / (altura - 1) - 1.0;
 
         return new Ponto(x, y);
     }
@@ -93,20 +64,11 @@ public class Transformacao {
      * @param altura altura do display em pixels
      * @return ponto em coordenadas do dispositivo
      */
-    public static Ponto ndc11ToDc(
-            Ponto ndc,
-            int largura,
-            int altura) {
-
+    public static Ponto ndc11ToDc(Ponto ndc, int largura, int altura) {
         validarDimensoes(largura, altura);
 
-        double x =
-                ((ndc.getX() + 1.0) / 2.0)
-                        * (largura - 1);
-
-        double y =
-                ((ndc.getY() + 1.0) / 2.0)
-                        * (altura - 1);
+        double x = ((ndc.getX() + 1.0) / 2.0) * (largura - 1);
+        double y = ((ndc.getY() + 1.0) / 2.0) * (altura - 1);
 
         return new Ponto(x, y);
     }
@@ -119,19 +81,12 @@ public class Transformacao {
      *               do mundo
      * @return ponto em coordenadas do mundo
      */
-    public static Ponto ndc01ToUser(
-            Ponto ndc,
-            JanelaMundo janela) {
+    public static Ponto ndc01ToUser(Ponto ndc, JanelaMundo janela) {
+        double x = janela.getXMin()
+                + ndc.getX() * (janela.getXMax() - janela.getXMin());
 
-        double x =
-                janela.getXMin()
-                        + ndc.getX()
-                        * (janela.getXMax() - janela.getXMin());
-
-        double y =
-                janela.getYMin()
-                        + ndc.getY()
-                        * (janela.getYMax() - janela.getYMin());
+        double y = janela.getYMin()
+                + ndc.getY() * (janela.getYMax() - janela.getYMin());
 
         return new Ponto(x, y);
     }
@@ -143,17 +98,12 @@ public class Transformacao {
      * @param janela janela do mundo
      * @return ponto em NDC [0,1]
      */
-    public static Ponto userToNdc01(
-            Ponto mundo,
-            JanelaMundo janela) {
+    public static Ponto userToNdc01(Ponto mundo, JanelaMundo janela) {
+        double x = (mundo.getX() - janela.getXMin())
+                / (janela.getXMax() - janela.getXMin());
 
-        double x =
-                (mundo.getX() - janela.getXMin())
-                        / (janela.getXMax() - janela.getXMin());
-
-        double y =
-                (mundo.getY() - janela.getYMin())
-                        / (janela.getYMax() - janela.getYMin());
+        double y = (mundo.getY() - janela.getYMin())
+                / (janela.getYMax() - janela.getYMin());
 
         return new Ponto(x, y);
     }
@@ -169,19 +119,14 @@ public class Transformacao {
      * @param janela janela do mundo
      * @return ponto em coordenadas do mundo
      */
-    public static Ponto ndc11ToUser(
-            Ponto ndc,
-            JanelaMundo janela) {
+    public static Ponto ndc11ToUser(Ponto ndc, JanelaMundo janela) {
+        double x = janela.getXMin()
+                + ((ndc.getX() + 1.0) / 2.0)
+                * (janela.getXMax() - janela.getXMin());
 
-        double x =
-                janela.getXMin()
-                        + ((ndc.getX() + 1.0) / 2.0)
-                        * (janela.getXMax() - janela.getXMin());
-
-        double y =
-                janela.getYMin()
-                        + ((ndc.getY() + 1.0) / 2.0)
-                        * (janela.getYMax() - janela.getYMin());
+        double y = janela.getYMin()
+                + ((ndc.getY() + 1.0) / 2.0)
+                * (janela.getYMax() - janela.getYMin());
 
         return new Ponto(x, y);
     }
@@ -193,21 +138,16 @@ public class Transformacao {
      * @param janela janela do mundo
      * @return ponto em NDC [-1,1]
      */
-    public static Ponto userToNdc11(
-            Ponto mundo,
-            JanelaMundo janela) {
+    public static Ponto userToNdc11(Ponto mundo, JanelaMundo janela) {
+        double x = 2.0
+                * (mundo.getX() - janela.getXMin())
+                / (janela.getXMax() - janela.getXMin())
+                - 1.0;
 
-        double x =
-                2.0
-                        * (mundo.getX() - janela.getXMin())
-                        / (janela.getXMax() - janela.getXMin())
-                        - 1.0;
-
-        double y =
-                2.0
-                        * (mundo.getY() - janela.getYMin())
-                        / (janela.getYMax() - janela.getYMin())
-                        - 1.0;
+        double y = 2.0
+                * (mundo.getY() - janela.getYMin())
+                / (janela.getYMax() - janela.getYMin())
+                - 1.0;
 
         return new Ponto(x, y);
     }
@@ -218,10 +158,7 @@ public class Transformacao {
      * @param largura largura do display
      * @param altura altura do display
      */
-    private static void validarDimensoes(
-            int largura,
-            int altura) {
-
+    private static void validarDimensoes(int largura, int altura) {
         if (largura < 2 || altura < 2) {
             throw new IllegalArgumentException(
                     "Largura e altura devem ser maiores que 1."

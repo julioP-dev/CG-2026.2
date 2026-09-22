@@ -213,57 +213,53 @@ public class JanelaPrincipal extends JFrame {
             int x,
             int y) {
 
-        /*
-         * A posição fornecida pelo MouseEvent já está
-         * no sistema de coordenadas do componente.
-         *
-         * Como o display possui a mesma origem adotada
-         * pelo sistema de dispositivo, ela pode ser
-         * tratada como uma coordenada DC.
-         */
-        Ponto dispositivo =
+        Ponto input =
                 new Ponto(x, y);
 
-        /*
-         * DC → NDC [0,1]
-         */
         Ponto ndc01 =
-                Transformacao.dcToNdc01(
-                        dispositivo,
+                Transformacao.inpToNdc01(
+                        input,
                         LARGURA_DISPLAY,
                         ALTURA_DISPLAY
                 );
 
-        /*
-         * DC → NDC [-1,1]
-         */
         Ponto ndc11 =
-                Transformacao.dcToNdc11(
-                        dispositivo,
+                Transformacao.inpToNdc11(
+                        input,
                         LARGURA_DISPLAY,
                         ALTURA_DISPLAY
                 );
 
-        /*
-         * NDC [0,1] → Mundo
-         *
-         */
         Ponto mundo =
                 Transformacao.ndc01ToUser(
                         ndc01,
                         janelaMundo
                 );
 
-        /*
-         * Ativa visualmente o pixel correspondente
-         * à posição do mouse.
-         */
-        display.drawPixel(x, y);
+        Ponto ndc01Final =
+                Transformacao.userToNdc01(
+                        mundo,
+                        janelaMundo
+                );
 
-        /*
-         * Atualiza as informações apresentadas
-         * na interface.
-         */
+        Ponto ndc11Final =
+                Transformacao.userToNdc11(
+                        mundo,
+                        janelaMundo
+                );
+
+        Ponto dispositivoFinal =
+                Transformacao.ndc01ToDc(
+                        ndc01Final,
+                        LARGURA_DISPLAY,
+                        ALTURA_DISPLAY
+                );
+
+        int pixelX = (int) Math.round(dispositivoFinal.getX());
+        int pixelY = (int) Math.round(dispositivoFinal.getY());
+
+        display.drawPixel(pixelX, pixelY);
+
         lblDispositivo.setText(
                 String.format(
                         "Dispositivo: (%d, %d)",
