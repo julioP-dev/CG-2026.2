@@ -3,10 +3,10 @@ Laboratórios e projetos desenvolvidos na disciplina de computação gráfica
 
 ## Integrantes
 
-- Julia 
+- Julia Pamplona
 - Júlio Pedro da Silva
 - Lívia Sousa Silva Ferreira
-- Thales
+- Thales Teles
 - Antônio Wenícios
 
 ## Linguagem
