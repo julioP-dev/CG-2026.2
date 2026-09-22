@@ -98,7 +98,7 @@ public class Display extends JPanel {
 
         Graphics graphics = imagem.getGraphics();
 
-        graphics.setColor(Color.BLACK);
+        graphics.setColor(Color.WHITE);
 
         graphics.fillRect(
                 0,

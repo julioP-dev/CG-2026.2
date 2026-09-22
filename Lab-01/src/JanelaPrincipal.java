@@ -9,6 +9,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.event.MouseInputAdapter;
 
+import javax.swing.JButton;
+import javax.swing.JOptionPane;
+import javax.swing.JTextField;
 /**
  * Janela principal
  *
@@ -42,6 +45,10 @@ public class JanelaPrincipal extends JFrame {
     private final JLabel lblNdc01;
     private final JLabel lblNdc11;
     private final JLabel lblMundo;
+    private final JTextField campoXMin;
+    private final JTextField campoXMax;
+    private final JTextField campoYMin;
+    private final JTextField campoYMax;
 
     /**
      * Construtor da janela principal.
@@ -77,6 +84,12 @@ public class JanelaPrincipal extends JFrame {
 
         lblMundo =
                 new JLabel("Mundo: -");
+
+        campoXMin = new JTextField("-100");
+        campoXMax = new JTextField("100");
+        campoYMin = new JTextField("-100");
+        campoYMax = new JTextField("100");
+
 
         configurarJanela();
         configurarMouse();
@@ -130,6 +143,11 @@ public class JanelaPrincipal extends JFrame {
          * Evita que o usuário altere o tamanho do display.
          */
         setResizable(false);
+
+        add(
+                criarPainelJanelaMundo(),
+                BorderLayout.EAST
+        );
     }
 
     /**
@@ -175,6 +193,95 @@ public class JanelaPrincipal extends JFrame {
         return painel;
     }
 
+    private JPanel criarPainelJanelaMundo() {
+
+        JPanel painel = new JPanel();
+
+        painel.setBorder(
+                BorderFactory.createTitledBorder(
+                        "Janela do Mundo"
+                )
+        );
+
+        painel.setLayout(
+                new GridLayout(5, 2, 5, 2)
+        );
+
+        painel.add(new JLabel("X mínimo:"));
+        painel.add(campoXMin);
+
+        painel.add(new JLabel("X máximo:"));
+        painel.add(campoXMax);
+
+        painel.add(new JLabel("Y mínimo:"));
+        painel.add(campoYMin);
+
+        painel.add(new JLabel("Y máximo:"));
+        painel.add(campoYMax);
+
+        JButton botaoAplicar =
+                new JButton("Aplicar");
+
+        botaoAplicar.addActionListener(
+                e -> atualizarJanelaMundo()
+        );
+
+        painel.add(botaoAplicar);
+
+        return painel;
+    }
+
+    private void atualizarJanelaMundo() {
+
+        try {
+
+            double xMin =
+                    Double.parseDouble(
+                            campoXMin.getText()
+                    );
+
+            double xMax =
+                    Double.parseDouble(
+                            campoXMax.getText()
+                    );
+
+            double yMin =
+                    Double.parseDouble(
+                            campoYMin.getText()
+                    );
+
+            double yMax =
+                    Double.parseDouble(
+                            campoYMax.getText()
+                    );
+
+            janelaMundo =
+                    new JanelaMundo(
+                            xMin,
+                            xMax,
+                            yMin,
+                            yMax
+                    );
+
+        } catch (NumberFormatException erro) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Digite apenas valores numéricos.",
+                    "Erro",
+                    JOptionPane.ERROR_MESSAGE
+            );
+
+        } catch (IllegalArgumentException erro) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    erro.getMessage(),
+                    "Erro",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
     /**
      * Configura o listener responsável por acompanhar
      * o movimento do mouse sobre o display.
