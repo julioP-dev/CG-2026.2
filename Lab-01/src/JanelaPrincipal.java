@@ -127,7 +127,10 @@ public class JanelaPrincipal extends JFrame {
                 criarPainelInformacoes(),
                 BorderLayout.SOUTH
         );
-
+        add(
+                criarPainelJanelaMundo(),
+                BorderLayout.EAST
+        );
         /*
          * Ajusta o tamanho da janela de acordo
          * com seus componentes.
@@ -143,11 +146,6 @@ public class JanelaPrincipal extends JFrame {
          * Evita que o usuário altere o tamanho do display.
          */
         setResizable(false);
-
-        add(
-                criarPainelJanelaMundo(),
-                BorderLayout.EAST
-        );
     }
 
     /**
