@@ -4,7 +4,6 @@ import java.awt.GridLayout;
 import java.awt.event.MouseEvent;
 
 import javax.swing.BorderFactory;
-import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -63,11 +62,6 @@ public class JanelaPrincipal extends JFrame {
     private final JTextField campoYMax;
 
     /**
-     * Seletor do sistema NDC utilizado.
-     */
-    private final JComboBox<TipoNDC> comboNdc;
-
-    /**
      * Campos para consulta de um ponto do mundo.
      */
     private final JTextField campoMundoX;
@@ -112,8 +106,6 @@ public class JanelaPrincipal extends JFrame {
         campoXMax = new JTextField("100");
         campoYMin = new JTextField("-100");
         campoYMax = new JTextField("100");
-
-        comboNdc = new JComboBox<>(TipoNDC.values());
 
         campoMundoX = new JTextField("0");
         campoMundoY = new JTextField("0");
@@ -236,7 +228,6 @@ public class JanelaPrincipal extends JFrame {
         );
 
         painel.add(criarPainelJanelaMundo());
-        painel.add(criarPainelNdc());
         painel.add(criarPainelConsultaMundo());
 
         return painel;
@@ -276,48 +267,6 @@ public class JanelaPrincipal extends JFrame {
         );
 
         painel.add(botaoAplicar);
-
-        return painel;
-    }
-
-    /**
-     * Cria o painel responsável por selecionar o sistema
-     * de coordenadas normalizadas do dispositivo (NDC)
-     * utilizado no pipeline de transformação.
-     *
-     * @return painel do seletor de NDC
-     */
-    private JPanel criarPainelNdc() {
-
-        JPanel painel = new JPanel();
-
-        painel.setBorder(
-                BorderFactory.createTitledBorder(
-                        "Sistema NDC"
-                )
-        );
-
-        painel.setLayout(
-                new GridLayout(2, 1, 5, 5)
-        );
-
-        painel.add(new JLabel("Intervalo utilizado:"));
-        painel.add(comboNdc);
-
-        /*
-         * Sempre que o usuário troca o sistema NDC, apenas
-         * o intervalo utilizado pelo pipeline é atualizado.
-         * Não disparamos nenhuma nova consulta aqui: os
-         * campos de "Consultar Ponto do Mundo" podem estar
-         * com um valor antigo (ou o padrão "0,0"), e usá-los
-         * automaticamente faria o pixel pular para um ponto
-         * que o usuário não pediu. A próxima interação
-         * (mouse ou botão "Mostrar no display") já vai usar
-         * o novo sistema.
-         */
-        comboNdc.addActionListener(
-                e -> ndcAtual = (TipoNDC) comboNdc.getSelectedItem()
-        );
 
         return painel;
     }
