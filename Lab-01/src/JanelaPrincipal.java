@@ -1,24 +1,23 @@
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.MouseEvent;
-
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.event.MouseInputAdapter;
-
-import javax.swing.JButton;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.event.MouseInputAdapter;
 
 /**
  * Janela principal
  *
  * - apresenta o display;
- * - recebe o clique do mouse (liga o pixel ativo);
+ * - rastreia o mouse (movimento, clique e arraste) e liga o pixel ativo;
  * - permite escolher o sistema de coordenadas NDC utilizado;
  * - permite consultar um ponto do mundo diretamente no display;
  * - executa as transformações;
@@ -57,6 +56,12 @@ public class JanelaPrincipal extends JFrame {
     private final JLabel lblNdc01;
     private final JLabel lblNdc11;
     private final JLabel lblMundo;
+
+    /**
+     * Label de alerta exibido quando a coordenada está
+     * fora dos limites do display.
+     */
+    private final JLabel lblAlerta;
     private final JTextField campoXMin;
     private final JTextField campoXMax;
     private final JTextField campoYMin;
@@ -107,6 +112,9 @@ public class JanelaPrincipal extends JFrame {
 
         lblMundo =
                 new JLabel("Mundo: -");
+
+        lblAlerta =
+                new JLabel(" ");
 
         campoXMin = new JTextField("-100");
         campoXMax = new JTextField("100");
@@ -197,7 +205,7 @@ public class JanelaPrincipal extends JFrame {
         );
 
         painel.setLayout(
-                new GridLayout(4, 1)
+                new GridLayout(5, 1)
         );
 
         Font fonte =
@@ -212,10 +220,14 @@ public class JanelaPrincipal extends JFrame {
         lblNdc11.setFont(fonte);
         lblMundo.setFont(fonte);
 
+        lblAlerta.setFont(fonte.deriveFont(Font.BOLD));
+        lblAlerta.setForeground(Color.RED);
+
         painel.add(lblDispositivo);
         painel.add(lblNdc01);
         painel.add(lblNdc11);
         painel.add(lblMundo);
+        painel.add(lblAlerta);
 
         return painel;
     }
@@ -440,6 +452,34 @@ public class JanelaPrincipal extends JFrame {
             int pixelX = (int) Math.round(dispositivo.getX());
             int pixelY = (int) Math.round(dispositivo.getY());
 
+            /*
+             * Ponto fora da janela do mundo cai fora do
+             * display: não exibe conversões inválidas.
+             */
+            if (!dentroDoDisplay(pixelX, pixelY)) {
+
+                String mensagem = String.format(
+                        "O ponto (%s, %s) está fora da janela do mundo "
+                                + "[%s, %s] x [%s, %s].",
+                        campoMundoX.getText(),
+                        campoMundoY.getText(),
+                        campoXMin.getText(),
+                        campoXMax.getText(),
+                        campoYMin.getText(),
+                        campoYMax.getText()
+                );
+
+                mostrarForaDosLimites(mensagem);
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        mensagem,
+                        "Fora dos limites",
+                        JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+
             display.drawPixel(pixelX, pixelY);
 
             atualizarLabels(pixelX, pixelY, mundo);
@@ -456,32 +496,124 @@ public class JanelaPrincipal extends JFrame {
     }
 
     /**
-     * Configura o listener responsável por capturar o
-     * clique do mouse sobre o display e ligar o pixel
-     * correspondente.
+     * Configura o listener responsável por rastrear o
+     * mouse sobre o display o tempo todo (movimento,
+     * clique e arraste), convertendo as coordenadas e
+     * ligando o pixel correspondente automaticamente.
      */
     private void configurarMouse() {
 
-        display.addMouseListener(
+        MouseInputAdapter rastreador =
                 new MouseInputAdapter() {
 
                     /**
-                     * Executado quando o usuário clica
-                     * dentro do display.
+                     * Executado quando o usuário pressiona
+                     * o botão dentro do display.
                      *
-                     * @param evento informações do clique do mouse
+                     * @param evento informações do mouse
                      */
                     @Override
-                    public void mouseClicked(
+                    public void mousePressed(
                             MouseEvent evento) {
 
-                        ativarPixelPorClique(
-                                evento.getX(),
-                                evento.getY()
-                        );
+                        rastrearMouse(evento);
                     }
-                }
-        );
+
+                    /**
+                     * Executado sempre que o mouse se move
+                     * sobre o display sem botão pressionado.
+                     *
+                     * @param evento informações do mouse
+                     */
+                    @Override
+                    public void mouseMoved(
+                            MouseEvent evento) {
+
+                        rastrearMouse(evento);
+                    }
+
+                    /**
+                     * Executado sempre que o mouse é arrastado
+                     * (movido com botão pressionado) no display.
+                     *
+                     * @param evento informações do mouse
+                     */
+                    @Override
+                    public void mouseDragged(
+                            MouseEvent evento) {
+
+                        rastrearMouse(evento);
+                    }
+                };
+
+        /*
+         * mousePressed é entregue pelo MouseListener;
+         * mouseMoved e mouseDragged só são entregues pelo
+         * MouseMotionListener. Por isso o adaptador precisa
+         * ser registrado nos dois.
+         */
+        display.addMouseListener(rastreador);
+        display.addMouseMotionListener(rastreador);
+    }
+
+    /**
+     * Converte a posição do mouse. Durante o arraste o
+     * Swing continua enviando eventos mesmo fora do
+     * display; nesse caso exibe um alerta em vez de
+     * conversões inválidas.
+     *
+     * @param evento informações do mouse
+     */
+    private void rastrearMouse(MouseEvent evento) {
+
+        int x = evento.getX();
+        int y = evento.getY();
+
+        if (!dentroDoDisplay(x, y)) {
+
+            mostrarForaDosLimites(
+                    String.format(
+                            "Coordenada (%d, %d) fora dos limites do display %dx%d.",
+                            x,
+                            y,
+                            LARGURA_DISPLAY,
+                            ALTURA_DISPLAY
+                    )
+            );
+            return;
+        }
+
+        ativarPixelPorClique(x, y);
+    }
+
+    /**
+     * @param x coordenada X de dispositivo
+     * @param y coordenada Y de dispositivo
+     * @return true se a coordenada está dentro do display
+     */
+    private boolean dentroDoDisplay(int x, int y) {
+
+        return x >= 0 && x < LARGURA_DISPLAY
+                && y >= 0 && y < ALTURA_DISPLAY;
+    }
+
+    /**
+     * Apaga o pixel ativo e substitui as conversões por
+     * uma mensagem de alerta.
+     *
+     * @param mensagem texto do alerta
+     */
+    private void mostrarForaDosLimites(String mensagem) {
+
+        display.limpar();
+        display.repaint();
+
+        lblDispositivo.setText("Dispositivo: fora dos limites");
+        lblNdc01.setText("NDC [0,1]: fora dos limites");
+        lblNdc11.setText("NDC [-1,1]: fora dos limites");
+        lblMundo.setText("Mundo: fora dos limites");
+
+        lblAlerta.setText("Alerta: " + mensagem);
     }
 
     /**
@@ -585,6 +717,8 @@ public class JanelaPrincipal extends JFrame {
             Ponto mundo,
             Ponto ndc01,
             Ponto ndc11) {
+
+        lblAlerta.setText(" ");
 
         lblDispositivo.setText(
                 String.format(
