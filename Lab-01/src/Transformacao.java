@@ -111,10 +111,6 @@ public class Transformacao {
     /**
      * Converte NDC [-1,1] para coordenadas do mundo.
      *
-     * Primeiro, o NDC [-1,1] é convertido para [0,1]
-     *
-     * Depois é aplicada a transformação para o mundo.
-     *
      * @param ndc ponto em NDC [-1,1]
      * @param janela janela do mundo
      * @return ponto em coordenadas do mundo
