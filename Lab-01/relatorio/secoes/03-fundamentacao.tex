@@ -1,0 +1,441 @@
+\section{Fundamentação teórica}
+\label{sec:fundamentacao-teorica}
+Para o desenvolvimento do rasterizador e o desenho do pixel na tela, diferentes espaços matemáticos precisam ser compreendidos. Nesta seção, cada sistema de coordenadas é apresentado junto de um gráfico que posiciona um mesmo ponto de exemplo e, em seguida, as fórmulas de transformação são deduzidas passo a passo. A referência principal para as expressões utilizadas é a \aula, e as deduções aqui apresentadas buscam chegar às mesmas fórmulas dessa aula; a correspondência de notação é apresentada na Seção~\ref{subsec:sintese}.
+
+\subsection{Sistemas de coordenadas}
+Os sistemas de coordenadas definem espaços onde pontos e objetos são posicionados e manipulados. Na Computação Gráfica, utilizamos sistemas abstratos e sistemas físicos para garantir que a imagem processada seja desenhada de forma correta e independente da resolução de tela.
+
+Neste trabalho são utilizados três sistemas: o sistema de coordenadas do \textbf{mundo} (definido pelo usuário), o sistema de coordenadas \textbf{normalizadas do dispositivo} (NDC), e o sistema de \textbf{coordenadas de dispositivo} (DC). Um ponto especificado no mundo percorre o caminho
+\[
+    \text{Mundo} \longrightarrow \text{NDC} \longrightarrow \text{DC},
+\]
+e o caminho inverso é percorrido quando uma posição da tela (por exemplo, um clique do mouse) é convertida de volta para o mundo. A etapa intermediária (NDC) é estudada em dois cenários: $[0,1] \times [0,1]$ e $[-1,1] \times [-1,1]$.
+
+Um ponto é denotado por $P_w = (x_w, y_w)$ no mundo, $P_n = (x_n, y_n)$ no NDC e $P_d = (x_d, y_d)$ no dispositivo. A razão entre o deslocamento de um ponto e a largura total do sistema é denotada pela letra $R$; o primeiro índice de $R$ indica o sistema (\emph{w}, \emph{n} ou \emph{d}) e o segundo, o eixo.
+
+Todos os gráficos deste relatório seguem a convenção adotada em sala na \aularef, em que o mundo, o NDC e o dispositivo foram desenhados no quadro com a origem (o mínimo de cada eixo) no canto inferior esquerdo e o eixo $y$ crescendo para cima \cite{quadro2}, convenção também usada em \cite{foley}. As transformações deduzidas são apenas escalas por razões e não invertem nenhum eixo; por isso, o mesmo ponto ocupa a mesma posição relativa em todos os sistemas. A orientação do display da implementação em Java, que difere dessa convenção, é discutida na Seção~\ref{sec:metodologia}.
+
+\subsection{Coordenadas de dispositivo}
+O sistema de Coordenadas de Dispositivo (DC) é um sistema \textbf{discreto} e representa a matriz física de pixels de um monitor ou tela, possuindo resolução finita com $W$ pixels na horizontal e $H$ pixels na vertical. Os pixels são endereçados por dois números inteiros, as coordenadas horizontal e vertical. Adota-se a origem $(0,0)$ no canto inferior esquerdo, com $y_d$ crescendo para cima (Figura~\ref{fig:dc}), de modo que qualquer ponto $P_d = (x_d, y_d)$ é um par de números inteiros tal que
+\begin{equation}
+    x_d \in \{0, 1, \dots, W-1\}, \qquad y_d \in \{0, 1, \dots, H-1\}.
+\end{equation}
+Como a contagem dos pixels começa em $0$, o último pixel de cada eixo possui índice $W-1$ (horizontal) ou $H-1$ (vertical). Assim, a largura total da tela, medida em índices de pixel, é $W-1$ e a altura total é $H-1$.
+
+Para localizar $P_d$ dentro da tela, medem-se os deslocamentos a partir da origem $(0,0)$ (Figura~\ref{fig:dc}):
+\begin{equation}
+    \Delta x_d = x_d - 0, \qquad \Delta y_d = y_d - 0.
+\end{equation}
+A razão entre o deslocamento $\Delta x_d$ e a largura total da tela é
+\begin{equation}
+    R_{dx} = \frac{\Delta x_d}{W-1} = \frac{x_d}{W-1},
+    \label{eq:razao-dc-x}
+\end{equation}
+isto é, a fração da largura da tela já percorrida até o pixel. Analogamente para $y$:
+\begin{equation}
+    R_{dy} = \frac{\Delta y_d}{H-1} = \frac{y_d}{H-1}.
+    \label{eq:razao-dc-y}
+\end{equation}
+Tem-se $R_{dx}, R_{dy} \in [0,1]$.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \resetpainel \presetdc \def\dims{1}\def\ptit{}
+        \painel{dc}
+    \end{tikzpicture}
+    \caption{Sistema de coordenadas de dispositivo (discreto) com um ponto de exemplo $P_d = (x_d, y_d)$. As cotas em azul indicam o deslocamento do ponto e a largura total em cada eixo.}
+    \label{fig:dc}
+\end{figure}
+
+\subsection{Janela de mundo}
+A Janela de Mundo é a região do universo contínuo onde os objetos virtuais estão definidos. Suas fronteiras são parametrizadas pelas coordenadas reais $x_{wmin}$, $x_{wmax}$, $y_{wmin}$ e $y_{wmax}$. Qualquer coordenada do mundo é definida pelo par contínuo $P_w = (x_w, y_w)$.
+
+Para localizar $P_w$ dentro da janela, medem-se os deslocamentos a partir do canto inferior esquerdo $(x_{wmin}, y_{wmin})$ (Figura~\ref{fig:mundo}):
+\begin{equation}
+    \Delta x_w = x_w - x_{wmin}, \qquad \Delta y_w = y_w - y_{wmin}.
+\end{equation}
+A razão entre o deslocamento $\Delta x_w$ e a largura total da janela é
+\begin{equation}
+    R_{wx} = \frac{\Delta x_w}{x_{wmax} - x_{wmin}} = \frac{x_w - x_{wmin}}{x_{wmax} - x_{wmin}},
+    \label{eq:razao-mundo-x}
+\end{equation}
+que responde à pergunta: ``quantas vezes $\Delta x_w$ cabe na largura total?''. Analogamente para $y$:
+\begin{equation}
+    R_{wy} = \frac{\Delta y_w}{y_{wmax} - y_{wmin}} = \frac{y_w - y_{wmin}}{y_{wmax} - y_{wmin}}.
+    \label{eq:razao-mundo-y}
+\end{equation}
+Para um ponto dentro da janela, tem-se $R_{wx}, R_{wy} \in [0,1]$; valores fora desse intervalo indicam um ponto fora da janela de mundo.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \resetpainel \presetmundo \def\dims{1}\def\ptit{}
+        \painel{mundo}
+    \end{tikzpicture}
+    \caption{Sistema de coordenadas do mundo com um ponto de exemplo $P_w = (x_w, y_w)$, os deslocamentos $\Delta x_w$ e $\Delta y_w$ e as larguras totais da janela.}
+    \label{fig:mundo}
+\end{figure}
+
+\subsection{NDC [0,1] e NDC [-1,1]}
+Para contornar o problema de resoluções variadas entre dispositivos, adota-se um sistema intermediário independente de resolução, o NDC (\textit{Normalized Device Coordinates}).
+\begin{itemize}
+    \item \textbf{Cenário (i) - NDC [0,1]:} As coordenadas são normalizadas para flutuarem entre $0$ (mínimo) e $1$ (máximo), com a origem no canto inferior esquerdo.
+    \item \textbf{Cenário (ii) - NDC [-1,1]:} Normalização comum no pipeline padrão do OpenGL, onde a origem $(0,0)$ reside no centro lógico da tela, estendendo-se para os extremos de $-1$ a $1$.
+\end{itemize}
+Os pontos NDC são números reais, denotados por $P_n = (x_n, y_n)$; quando for necessário distinguir os cenários, escreve-se $P_n = (x_n^{(i)}, y_n^{(i)})$ no cenário (i) e $P_n = (x_n^{(ii)}, y_n^{(ii)})$ no cenário (ii).
+
+Assim como nos demais sistemas, $P_n$ é localizado pelos deslocamentos medidos a partir do extremo inferior/esquerdo de cada eixo (Figura~\ref{fig:ndc}):
+\begin{equation}
+    \Delta x_n = x_n - x_{nmin}, \qquad \Delta y_n = y_n - y_{nmin},
+\end{equation}
+sendo $x_{nmin} = y_{nmin} = 0$ no cenário (i) e $x_{nmin} = y_{nmin} = -1$ no cenário (ii); em ambos, $x_{nmax} = y_{nmax} = 1$.
+
+No cenário (i), o deslocamento vale $\Delta x_n^{(i)} = x_n^{(i)} - 0$ e a largura total vale $1 - 0 = 1$, logo
+\begin{equation}
+    R_{nx}^{(i)} = \frac{x_n^{(i)} - 0}{1 - 0} = x_n^{(i)}.
+    \label{eq:razao-ndc01-x}
+\end{equation}
+No cenário (ii), o deslocamento vale $\Delta x_n^{(ii)} = x_n^{(ii)} - (-1) = x_n^{(ii)} + 1$ e a largura total vale $1 - (-1) = 2$, logo
+\begin{equation}
+    R_{nx}^{(ii)} = \frac{x_n^{(ii)} - (-1)}{1 - (-1)} = \frac{x_n^{(ii)} + 1}{2}.
+    \label{eq:razao-ndc11-x}
+\end{equation}
+Os resultados para o eixo $y$ são análogos: $R_{ny}^{(i)} = y_n^{(i)}$ e $R_{ny}^{(ii)} = \frac{y_n^{(ii)} + 1}{2}$.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{scope}
+            \resetpainel \presetndci \def\dims{1}\def\pw{4.0}
+            \painel{ndcA}
+        \end{scope}
+
+        \begin{scope}[xshift=7.4cm]
+            \resetpainel \presetndcii \def\dims{1}\def\pw{4.0}
+            \painel{ndcB}
+        \end{scope}
+    \end{tikzpicture}
+    \caption{Sistemas de coordenadas normalizadas do dispositivo nos cenários (i) e (ii), com um ponto de exemplo $P_n$. Em ambos, os deslocamentos são medidos a partir do extremo inferior/esquerdo de cada eixo.}
+    \label{fig:ndc}
+\end{figure}
+
+\subsection{Transformações entre os sistemas}
+Todas as conversões seguem a mesma ideia. Em qualquer sistema, a posição de um ponto ao longo de um eixo é descrita pela razão
+\[
+    R = \frac{\text{``deslocamento a partir do mínimo''}}{\text{``largura total''}} = \frac{q - q_{min}}{q_{max} - q_{min}}.
+\]
+em que $q$ denota, de forma genérica, a coordenada de um ponto ao longo de um dos eixos ($x$ ou $y$) em qualquer um dos três sistemas (Mundo, NDC ou DC), e $q_{min}$, $q_{max}$ são os extremos desse mesmo eixo nesse sistema. Por exemplo, $q = x_w$, $q_{min} = x_{wmin}$ e $q_{max} = x_{wmax}$ no caso do eixo $x$ no Mundo. Como as transformações apenas escalam e transladam cada eixo, o ponto ocupa a \textbf{mesma proporção} da largura total em todos os sistemas. Basta, portanto, \textbf{igualar as razões} dos dois sistemas e isolar a incógnita, procedimento seguido em sala no quadro \cite{quadro2}. Considera-se $x_{wmin} < x_{wmax}$ e $y_{wmin} < y_{wmax}$. Cada transformação é deduzida para os dois cenários de NDC e o nome do procedimento correspondente aparece entre parênteses no título. As deduções são feitas para $x$; as expressões finais incluem também $y$, obtido de forma análoga.
+
+% ------------------------------------------------------------
+\subsubsection{\texorpdfstring{Mundo $\rightarrow$ NDC}{Mundo -> NDC} (\texttt{user\_to\_ndc})}
+Dado $P_w = (x_w, y_w)$ no mundo, obtém-se o ponto $P_n = (x_n, y_n)$ no NDC.
+
+\paragraph{Cenário (i) --- NDC [0,1].} Igualando a razão no mundo, $R_{wx}$, à razão no NDC [0,1], $R_{nx}^{(i)}$ (Figura~\ref{fig:mundo-ndc01}):
+\[
+    \frac{x_w - x_{wmin}}{x_{wmax} - x_{wmin}} = \frac{x_n^{(i)} - 0}{1 - 0} = x_n^{(i)}.
+\]
+O termo $x_n^{(i)}$ já está isolado. Fazendo o mesmo para $y$:
+\begin{equation}
+    \boxed{\begin{aligned}
+        x_n^{(i)} &= \frac{x_w - x_{wmin}}{x_{wmax} - x_{wmin}} \\[2mm]
+        y_n^{(i)} &= \frac{y_w - y_{wmin}}{y_{wmax} - y_{wmin}}
+    \end{aligned}}
+    \label{eq:user-ndc-i}
+\end{equation}
+
+\begin{figure}[H]
+    \centering
+    \mapafig{\presetmundo}{\presetndci}
+    \caption{Conversão nos dois sentidos entre o sistema do mundo e o NDC $[0,1] \times [0,1]$: \texttt{user\_to\_ndc} ($\rightarrow$) e \texttt{ndc\_to\_user} ($\leftarrow$).}
+    \label{fig:mundo-ndc01}
+\end{figure}
+
+\paragraph{Cenário (ii) --- NDC [-1,1].} O extremo inferior do eixo é $-1$, então o deslocamento é $x_n^{(ii)} - (-1)$ e a largura total é $1 - (-1) = 2$ (Figura~\ref{fig:mundo-ndc11}). Igualando as razões:
+\[
+    \frac{x_w - x_{wmin}}{x_{wmax} - x_{wmin}} = \frac{x_n^{(ii)} + 1}{2}.
+\]
+Multiplicando ambos os lados por $2$ e subtraindo $1$:
+\[
+    x_n^{(ii)} = 2 \cdot \frac{x_w - x_{wmin}}{x_{wmax} - x_{wmin}} - 1
+    = \frac{2x_w - x_{wmax} - x_{wmin}}{x_{wmax} - x_{wmin}}.
+\]
+Fazendo o mesmo para $y$:
+\begin{equation}
+    \boxed{\begin{aligned}
+        x_n^{(ii)} &= 2 \cdot \frac{x_w - x_{wmin}}{x_{wmax} - x_{wmin}} - 1 \\[2mm]
+        y_n^{(ii)} &= 2 \cdot \frac{y_w - y_{wmin}}{y_{wmax} - y_{wmin}} - 1
+    \end{aligned}}
+    \label{eq:user-ndc-ii}
+\end{equation}
+Note que $x_n^{(ii)} = 2\,x_n^{(i)} - 1$: as bordas $x_{wmin}$ e $x_{wmax}$ e o centro da janela são levados a $-1$, $1$ e $0$, respectivamente.
+
+\begin{figure}[H]
+    \centering
+    \mapafig{\presetmundo}{\presetndcii}
+    \caption{Conversão nos dois sentidos entre o sistema do mundo e o NDC $[-1,1] \times [-1,1]$: \texttt{user\_to\_ndc} ($\rightarrow$) e \texttt{ndc\_to\_user} ($\leftarrow$).}
+    \label{fig:mundo-ndc11}
+\end{figure}
+
+% ------------------------------------------------------------
+\subsubsection{\texorpdfstring{NDC $\rightarrow$ Mundo}{NDC -> Mundo} (\texttt{ndc\_to\_user})}
+Dado $P_n = (x_n, y_n)$ no NDC, obtém-se $P_w = (x_w, y_w)$ no mundo (transformação inversa, Figuras~\ref{fig:mundo-ndc01} e~\ref{fig:mundo-ndc11}). Parte-se da mesma igualdade de razões, agora isolando $x_w$.
+
+\paragraph{Cenário (i) --- NDC [0,1].} Da igualdade $\dfrac{x_w - x_{wmin}}{x_{wmax} - x_{wmin}} = x_n^{(i)}$, multiplica-se por $x_{wmax} - x_{wmin}$ e soma-se $x_{wmin}$:
+\begin{equation}
+    \boxed{\begin{aligned}
+        x_w &= x_{wmin} + x_n^{(i)} \, (x_{wmax} - x_{wmin}) \\
+        y_w &= y_{wmin} + y_n^{(i)} \, (y_{wmax} - y_{wmin})
+    \end{aligned}}
+    \label{eq:ndc-user-i}
+\end{equation}
+
+\paragraph{Cenário (ii) --- NDC [-1,1].} Da igualdade $\dfrac{x_w - x_{wmin}}{x_{wmax} - x_{wmin}} = \dfrac{x_n^{(ii)} + 1}{2}$, procede-se da mesma forma:
+\begin{equation}
+    \boxed{\begin{aligned}
+        x_w &= x_{wmin} + \frac{x_n^{(ii)} + 1}{2} \, (x_{wmax} - x_{wmin}) \\[2mm]
+        y_w &= y_{wmin} + \frac{y_n^{(ii)} + 1}{2} \, (y_{wmax} - y_{wmin})
+    \end{aligned}}
+    \label{eq:ndc-user-ii}
+\end{equation}
+
+% ------------------------------------------------------------
+\subsubsection{\texorpdfstring{NDC $\rightarrow$ DC}{NDC -> DC} (\texttt{ndc\_to\_dc})}
+Dado $P_n = (x_n, y_n)$ no NDC, obtém-se o ponto equivalente $P_d = (x_d, y_d)$ nas coordenadas de dispositivo. A razão no dispositivo é $R_{dx} = \dfrac{x_d}{W-1}$.
+
+\paragraph{Cenário (i) --- NDC [0,1].} Igualando $R_{nx}^{(i)} = R_{dx}$ (Figura~\ref{fig:ndc01-dc}):
+\[
+    \frac{x_n^{(i)} - 0}{1 - 0} = \frac{x_d}{W-1}
+    \quad \Rightarrow \quad
+    x_d = x_n^{(i)} \, (W-1).
+\]
+Como $x_n^{(i)} \in [0,1] \subset \mathbb{R}$, esse produto em geral não é inteiro, mas o índice de um pixel precisa ser. Realiza-se, então, um arredondamento para o inteiro mais próximo, definido por
+\begin{equation}
+    \operatorname{round}(x) =
+    \begin{cases}
+        \lceil x \rceil, & \text{se } x - \lfloor x \rfloor \ge 0{,}5 \\
+        \lfloor x \rfloor, & \text{se } x - \lfloor x \rfloor < 0{,}5
+    \end{cases}
+    \label{eq:round}
+\end{equation}
+Analogamente para $y$, com $H-1$:
+\begin{equation}
+    \boxed{\begin{aligned}
+        x_d &= \operatorname{round}\!\left( x_n^{(i)} \, (W-1) \right) \\
+        y_d &= \operatorname{round}\!\left( y_n^{(i)} \, (H-1) \right)
+    \end{aligned}}
+    \label{eq:ndc-dc-i}
+\end{equation}
+
+O trecho a seguir, em C, ilustra apenas o princípio do arredondamento: soma-se $0{,}5$ ao valor e trunca-se o resultado para inteiro\footnote{Em C, o \textit{cast} \texttt{(int)} converte um valor de ponto flutuante para inteiro descartando a parte decimal (truncamento em direção a zero), mantendo apenas a parte inteira do número. Por exemplo, \texttt{(int)(599.25 + 0.5)} = \texttt{(int)(599.75)} = \texttt{599}.}; como os valores tratados aqui são sempre não negativos, essa truncagem equivale a tomar o piso, reproduzindo exatamente a Definição~\eqref{eq:round}:
+\begin{verbatim}
+int round(float a) {
+    return (int)(a + 0.5);
+}
+\end{verbatim}
+
+No projeto\footnote{Código-fonte disponível no repositório do projeto \cite{repo}.}, a função efetivamente utilizada foi a \texttt{Math.round()} da biblioteca padrão do Java, que segue o mesmo princípio: soma-se $0{,}5$ ao valor de ponto flutuante e toma-se o piso do resultado para obter o inteiro mais próximo.
+O arredondamento limita o erro de posição a meio pixel, enquanto o piso ($\lfloor \cdot \rfloor$) poderia deslocar o ponto em quase um pixel inteiro.
+
+\begin{figure}[H]
+    \centering
+    \mapafig{\presetndci}{\presetdc}
+    \caption{Conversão nos dois sentidos entre o NDC $[0,1] \times [0,1]$ e o dispositivo: \texttt{ndc\_to\_dc} ($\rightarrow$) e \texttt{inp\_to\_ndc} ($\leftarrow$).}
+    \label{fig:ndc01-dc}
+\end{figure}
+
+\paragraph{Cenário (ii) --- NDC [-1,1].} Igualando $R_{nx}^{(ii)} = R_{dx}$ (Figura~\ref{fig:ndc11-dc}) e multiplicando por $W-1$:
+\[
+    \frac{x_n^{(ii)} + 1}{2} = \frac{x_d}{W-1}
+    \quad \Rightarrow \quad
+    x_d = \frac{x_n^{(ii)} + 1}{2} \, (W-1).
+\]
+O fator $\left(x_n^{(ii)} + 1\right)/2$ pertence a $[0,1]$ e o resultado, em geral, não é inteiro; aplica-se a função $\operatorname{round}$ da Definição~\eqref{eq:round}:
+\begin{equation}
+    \boxed{\begin{aligned}
+        x_d &= \operatorname{round}\!\left( \frac{x_n^{(ii)} + 1}{2} \, (W-1) \right) \\[2mm]
+        y_d &= \operatorname{round}\!\left( \frac{y_n^{(ii)} + 1}{2} \, (H-1) \right)
+    \end{aligned}}
+    \label{eq:ndc-dc-ii}
+\end{equation}
+
+\begin{figure}[H]
+    \centering
+    \mapafig{\presetndcii}{\presetdc}
+    \caption{Conversão nos dois sentidos entre o NDC $[-1,1] \times [-1,1]$ e o dispositivo: \texttt{ndc\_to\_dc} ($\rightarrow$) e \texttt{inp\_to\_ndc} ($\leftarrow$).}
+    \label{fig:ndc11-dc}
+\end{figure}
+
+% ------------------------------------------------------------
+\subsubsection{\texorpdfstring{DC $\rightarrow$ NDC}{DC -> NDC} (\texttt{inp\_to\_ndc})}
+Dado $P_d = (x_d, y_d)$ em pixels, por exemplo a posição de um clique do mouse, obtém-se $P_n = (x_n, y_n)$ no NDC (transformação inversa, Figuras~\ref{fig:ndc01-dc} e~\ref{fig:ndc11-dc}). Parte-se da mesma igualdade $R_{dx} = R_{nx}$, agora isolando $x_n$. Como $x_d$ é inteiro e $x_n$ é real, não há arredondamento, mas a divisão deve ser feita em ponto flutuante.
+
+\paragraph{Cenário (i) --- NDC [0,1].} Da igualdade $\dfrac{x_d}{W-1} = \dfrac{x_n^{(i)} - 0}{1 - 0}$:
+\begin{equation}
+    \boxed{\begin{aligned}
+        x_n^{(i)} &= \frac{x_d}{W-1} \\[2mm]
+        y_n^{(i)} &= \frac{y_d}{H-1}
+    \end{aligned}}
+    \label{eq:dc-ndc-i}
+\end{equation}
+
+\paragraph{Cenário (ii) --- NDC [-1,1].} Da igualdade $\dfrac{x_d}{W-1} = \dfrac{x_n^{(ii)} + 1}{2}$, multiplica-se por $2$ e subtrai-se $1$:
+\begin{equation}
+    \boxed{\begin{aligned}
+        x_n^{(ii)} &= 2 \cdot \frac{x_d}{W-1} - 1 \\[2mm]
+        y_n^{(ii)} &= 2 \cdot \frac{y_d}{H-1} - 1
+    \end{aligned}}
+    \label{eq:dc-ndc-ii}
+\end{equation}
+
+% ------------------------------------------------------------
+\subsubsection{Síntese e composição dos procedimentos}
+\label{subsec:sintese}
+A Tabela~\ref{tab:sintese} resume as expressões para a coordenada $x$; as de $y$ são obtidas trocando $x$ por $y$, $x_{wmin}$ e $x_{wmax}$ por $y_{wmin}$ e $y_{wmax}$, e $W$ por $H$.
+
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.9}
+    \small
+    \begin{tabular}{l|c|l}
+        \textbf{Procedimento} & \textbf{Cenário} & \textbf{Expressão para $x$} \\ \hline
+        \texttt{user\_to\_ndc} & (i)  & $x_n^{(i)} = \dfrac{x_w - x_{wmin}}{x_{wmax} - x_{wmin}}$ \\
+        \texttt{user\_to\_ndc} & (ii) & $x_n^{(ii)} = 2 \cdot \dfrac{x_w - x_{wmin}}{x_{wmax} - x_{wmin}} - 1$ \\
+        \texttt{ndc\_to\_user} & (i)  & $x_w = x_{wmin} + x_n^{(i)} \, (x_{wmax} - x_{wmin})$ \\
+        \texttt{ndc\_to\_user} & (ii) & $x_w = x_{wmin} + \dfrac{x_n^{(ii)} + 1}{2} \, (x_{wmax} - x_{wmin})$ \\
+        \texttt{ndc\_to\_dc}   & (i)  & $x_d = \operatorname{round}\!\left( x_n^{(i)} \, (W-1) \right)$ \\
+        \texttt{ndc\_to\_dc}   & (ii) & $x_d = \operatorname{round}\!\left( \dfrac{x_n^{(ii)} + 1}{2} \, (W-1) \right)$ \\
+        \texttt{inp\_to\_ndc}  & (i)  & $x_n^{(i)} = \dfrac{x_d}{W-1}$ \\
+        \texttt{inp\_to\_ndc}  & (ii) & $x_n^{(ii)} = 2 \cdot \dfrac{x_d}{W-1} - 1$
+    \end{tabular}
+    \caption{Resumo dos procedimentos de transformação de coordenadas.}
+    \label{tab:sintese}
+\end{table}
+
+Compondo os procedimentos, e lembrando que $x_n^{(i)} = \left(x_n^{(ii)} + 1\right)/2 = R_{wx}$, os dois cenários levam às mesmas expressões diretas:
+\begin{align*}
+    \text{Mundo} \rightarrow \text{DC:} \quad & x_d = \operatorname{round}\!\left( \frac{x_w - x_{wmin}}{x_{wmax} - x_{wmin}} \, (W-1) \right), \\[1mm]
+    \text{DC} \rightarrow \text{Mundo:} \quad & x_w = x_{wmin} + \frac{x_d}{W-1} \, (x_{wmax} - x_{wmin}).
+\end{align*}
+Isso mostra que a escolha entre NDC $[0,1]$ e NDC $[-1,1]$ altera apenas os valores intermediários, e não o pixel final nem o ponto recuperado no mundo, o que serve de critério de validação da implementação. Como o passo Mundo $\rightarrow$ DC arredonda para o pixel, a volta DC $\rightarrow$ Mundo recupera o ponto original apenas com erro de até meio pixel.
+
+As expressões deduzidas coincidem com as apresentadas na \aularef, que adota o NDC $[0,1] \times [0,1]$ e escreve, para a transformação do mundo para o NDC e do NDC para o dispositivo,
+\begin{align*}
+    \mathit{ndcx} &= \frac{x - x_{min}}{x_{max} - x_{min}}, &
+    \mathit{ndcy} &= \frac{y - y_{min}}{y_{max} - y_{min}}, \\[1mm]
+    \mathit{dcx} &= \operatorname{round}\!\big(\mathit{ndcx}\,(\mathit{ndh} - 1)\big), &
+    \mathit{dcy} &= \operatorname{round}\!\big(\mathit{ndcy}\,(\mathit{ndv} - 1)\big).
+\end{align*}
+A primeira linha corresponde à Equação~\eqref{eq:user-ndc-i} e a segunda à Equação~\eqref{eq:ndc-dc-i}, apenas com outra notação (Tabela~\ref{tab:notacao}). O cenário $[-1,1] \times [-1,1]$, solicitado no exercício da aula, é obtido pelas Equações~\eqref{eq:user-ndc-ii} e~\eqref{eq:ndc-dc-ii} e, como mostrado acima, leva à mesma expressão final para o pixel. Em ambas as fórmulas o eixo $y$ não sofre inversão: a aula não prevê reflexão entre o NDC e o dispositivo.
+
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.5}
+    \small
+    \begin{tabular}{l|l}
+        \textbf{Aula2} & \textbf{Este relatório} \\ \hline
+        $x,\ y$ & $x_w,\ y_w$ \\
+        $x_{min},\ x_{max},\ y_{min},\ y_{max}$ & $x_{wmin},\ x_{wmax},\ y_{wmin},\ y_{wmax}$ \\
+        $\mathit{ndcx},\ \mathit{ndcy}$ & $x_n^{(i)},\ y_n^{(i)}$ \\
+        $\mathit{dcx},\ \mathit{dcy}$ & $x_d,\ y_d$ \\
+        $\mathit{ndh},\ \mathit{ndv}$ & $W,\ H$
+    \end{tabular}
+    \caption{Correspondência entre a notação da Aula2 e a deste relatório.}
+    \label{tab:notacao}
+\end{table}
+
+% ------------------------------------------------------------
+\subsubsection{Exemplo numérico}
+Considere a janela de mundo $x_{wmin} = -2$, $x_{wmax} = 6$, $y_{wmin} = -1$, $y_{wmax} = 4$, um dispositivo de $W = 800$ por $H = 600$ pixels e o ponto $P_w = (4, 2)$.
+
+\paragraph{Ida (Mundo $\rightarrow$ NDC $\rightarrow$ DC), cenário (i).} Pelas Equações~\eqref{eq:user-ndc-i} e~\eqref{eq:ndc-dc-i}:
+\begin{align*}
+    x_n^{(i)} &= \frac{4 - (-2)}{6 - (-2)} = 0{,}75, &
+    y_n^{(i)} &= \frac{2 - (-1)}{4 - (-1)} = 0{,}6,
+\end{align*}
+\begin{align*}
+    x_d &= \operatorname{round}(0{,}75 \cdot 799) = \operatorname{round}(599{,}25) = 599, \\
+    y_d &= \operatorname{round}(0{,}6 \cdot 599) = \operatorname{round}(359{,}4) = 359.
+\end{align*}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \def\ex{5.0}
+        \begin{scope}
+            \resetpainel \presetmundo
+            \def\pw{3.3}\def\ph{2.3}\def\lfont{\scriptsize}
+            \def\lxa{$-2$}\def\lxb{$6$}\def\lya{$-1$}\def\lyb{$4$}\def\lpt{$P_w = (4,\ 2)$}
+            \painel{A}
+        \end{scope}
+        \begin{scope}[xshift=\ex cm]
+            \resetpainel \presetndci
+            \def\pw{3.3}\def\ph{2.3}\def\ptit{NDC $[0,1]^2$}
+            \def\lpt{$P_n = (0{,}75;\ 0{,}6)$}
+            \painel{B}
+        \end{scope}
+        \begin{scope}[xshift=2*\ex cm]
+            \resetpainel \presetdc
+            \def\pw{3.3}\def\ph{2.3}\def\ptit{DC}\def\lfont{\scriptsize}
+            \def\lxb{$799$}\def\lyb{$599$}\def\lpt{$P_d = (599,\ 359)$}
+            \painel{C}
+        \end{scope}
+        \draw[-{Stealth[length=2.5mm]}, thick, red!75!black] (A-P) -- (B-P);
+        \draw[-{Stealth[length=2.5mm]}, thick, red!75!black] (B-P) -- (C-P);
+    \end{tikzpicture}
+    \caption{Exemplo numérico do cenário (i): o mesmo ponto no mundo, no NDC $[0,1]$ e no dispositivo. A ida percorre os sistemas da esquerda para a direita e a volta, da direita para a esquerda.}
+    \label{fig:exemplo-i}
+\end{figure}
+
+\paragraph{Ida, cenário (ii).} Pelas Equações~\eqref{eq:user-ndc-ii} e~\eqref{eq:ndc-dc-ii}:
+\begin{align*}
+    x_n^{(ii)} &= 2 \cdot 0{,}75 - 1 = 0{,}5, &
+    y_n^{(ii)} &= 2 \cdot 0{,}6 - 1 = 0{,}2, \\
+    x_d &= \operatorname{round}\!\left( \tfrac{0{,}5 + 1}{2} \cdot 799 \right) = 599, &
+    y_d &= \operatorname{round}\!\left( \tfrac{0{,}2 + 1}{2} \cdot 599 \right) = 359.
+\end{align*}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \def\ex{5.0}
+        \begin{scope}
+            \resetpainel \presetmundo
+            \def\pw{3.3}\def\ph{2.3}\def\lfont{\scriptsize}
+            \def\lxa{$-2$}\def\lxb{$6$}\def\lya{$-1$}\def\lyb{$4$}\def\lpt{$P_w = (4,\ 2)$}
+            \painel{A}
+        \end{scope}
+        \begin{scope}[xshift=\ex cm]
+            \resetpainel \presetndcii
+            \def\pw{3.3}\def\ph{2.3}\def\ptit{NDC $[-1,1]^2$}
+            \def\lpt{$P_n = (0{,}5;\ 0{,}2)$}
+            \painel{B}
+        \end{scope}
+        \begin{scope}[xshift=2*\ex cm]
+            \resetpainel \presetdc
+            \def\pw{3.3}\def\ph{2.3}\def\ptit{DC}\def\lfont{\scriptsize}
+            \def\lxb{$799$}\def\lyb{$599$}\def\lpt{$P_d = (599,\ 359)$}
+            \painel{C}
+        \end{scope}
+        \draw[-{Stealth[length=2.5mm]}, thick, red!75!black] (A-P) -- (B-P);
+        \draw[-{Stealth[length=2.5mm]}, thick, red!75!black] (B-P) -- (C-P);
+    \end{tikzpicture}
+    \caption{Exemplo numérico do cenário (ii): o mesmo ponto no mundo, no NDC $[-1,1]$ e no dispositivo. A ida percorre os sistemas da esquerda para a direita e a volta, da direita para a esquerda.}
+    \label{fig:exemplo-ii}
+\end{figure}
+
+\paragraph{Volta (DC $\rightarrow$ NDC $\rightarrow$ Mundo).} Partindo de $P_d = (599, 359)$, pelas Equações~\eqref{eq:dc-ndc-i} e~\eqref{eq:ndc-user-i} (cenário (i)):
+\begin{align*}
+    x_n^{(i)} &= \frac{599}{799} \approx 0{,}7497, &
+    y_n^{(i)} &= \frac{359}{599} \approx 0{,}5993, \\
+    x_w &= -2 + \frac{599}{799} \cdot 8 \approx 3{,}9975, &
+    y_w &= -1 + \frac{359}{599} \cdot 5 \approx 1{,}9967.
+\end{align*}
+Pelas Equações~\eqref{eq:dc-ndc-ii} e~\eqref{eq:ndc-user-ii} (cenário (ii)):
+\begin{align*}
+    x_n^{(ii)} &= 2 \cdot \frac{599}{799} - 1 \approx 0{,}4994, &
+    y_n^{(ii)} &= 2 \cdot \frac{359}{599} - 1 \approx 0{,}1987, \\
+    x_w &= -2 + \frac{0{,}4994 + 1}{2} \cdot 8 \approx 3{,}9975, &
+    y_w &= -1 + \frac{0{,}1987 + 1}{2} \cdot 5 \approx 1{,}9967.
+\end{align*}
+Em ambos os cenários o ponto recuperado, $P_w \approx (3{,}9975;\ 1{,}9967)$, difere do original $(4,2)$ por menos de meio pixel (cerca de $0{,}005$ em $x$ e $0{,}004$ em $y$), como esperado pelo arredondamento da ida.

@@ -35,8 +35,26 @@ bin/
 .classpath
 .project
 
-# VS Code
-.vscode/
+# VS Code — mantemos o settings.json compartilhado (recipe do LaTeX Workshop),
+# mas ignoramos o restante, que costuma ser específico de cada máquina
+.vscode/*
+
+# LaTeX
+*.aux
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.bbl
+*.blg
+*.lof
+*.lot
+*.nav
+*.snm
+*.vrb
+build/
+*.pdf
 
 # Sistema operacional
 .DS_Store

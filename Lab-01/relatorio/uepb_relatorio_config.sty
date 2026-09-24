@@ -1,0 +1,57 @@
+\usepackage[a4paper, margin=3cm, top=3cm, bottom=2cm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{mathptmx}
+
+\usepackage{hyperref}
+
+\hypersetup{
+    colorlinks=true,    % Remove as caixas vermelhas em volta do texto)
+    linkcolor=black,    % Cor dos links internos
+    citecolor=black,    % Cor das referências bibliográficas
+    filecolor=black,    % Cor para links de arquivos locais
+    urlcolor=blue       % Cor para links de internet
+}
+
+% Pacote para carregar imagens
+\usepackage{graphicx}
+
+% Comandos para alterar os dados da capa.
+\newcommand{\logomarca}[1]{\def\imprimirlogomarca{#1}}
+\newcommand{\universidade}[1]{\def\imprimiruniversidade{#1}}
+\newcommand{\centro}[1]{\def\imprimircentro{#1}}
+\newcommand{\departamento}[1]{\def\imprimirdepartamento{#1}}
+\newcommand{\curso}[1]{\def\imprimircurso{#1}}
+\newcommand{\autores}[1]{\def\imprimirautores{#1}}
+\newcommand{\titulo}[1]{\def\imprimirtitulo{#1}}
+\newcommand{\cidadeuf}[1]{\def\imprimircidadeuf{#1}}
+\newcommand{\dataano}[1]{\def\imprimirdataano{#1}}
+
+% Comando principal que desenha a capa com base nos parâmetros inseridos
+\newcommand{\imprimircapa}{
+    \begin{titlepage}
+        \centering
+
+        \includegraphics[width=3cm]{\imprimirlogomarca} \par
+        \vspace{0.5cm}
+
+        {\large \textbf{\imprimiruniversidade} \par}
+        {\large \textbf{\imprimircentro} \par}
+        {\large \textbf{\imprimirdepartamento} \par}
+        {\large \textbf{\imprimircurso} \par}
+
+        \vspace{3.5cm}
+
+        {\large \textbf{\imprimirautores} \par}
+
+        \vspace{4.5cm}
+
+        {\Large \textbf{\imprimirtitulo} \par}
+
+        \vfill
+
+        {\large \textbf{\imprimircidadeuf} \par}
+        {\large \textbf{\imprimirdataano} \par}
+    \end{titlepage}
+}

@@ -1,0 +1,58 @@
+\documentclass[12pt, a4paper]{article}
+\usepackage{uepb_relatorio_config}
+
+% --- PACOTES E MACROS ADICIONAIS ---
+\usepackage{amsmath, amssymb}
+\usepackage{float}
+\usepackage{paineis_tikz}
+
+% Referência à Aula2 (Prof. Robson Pequeno de Sousa) com nota de rodapé
+% \aula: primeira menção, com a nota completa; \aularef: menções seguintes, que remetem a essa nota.
+\newcommand{\aula}{Aula~2\footnote{\label{fn:aula}SOUSA, Robson Pequeno de. \textit{Sistemas de coordenadas}: Aula2. Material da disciplina de Computação Gráfica. As referências bibliográficas constam ao final do material do professor. Ver também \cite{aula2}.}}
+\newcommand{\aularef}{Aula~2\footnote{Ver a nota~\ref{fn:aula}.}}
+
+
+\begin{document}
+
+\emergencystretch=3em
+\hbadness=10000
+\vbadness=10000
+\flushbottom
+\setlength{\skip\footins}{12pt plus 4pt minus 4pt}
+\setlength{\footnotesep}{11pt}
+
+% --- CAPA ---
+\logomarca{imagens/marca-uepb.png}
+\universidade{UNIVERSIDADE ESTADUAL DA PARAÍBA - UEPB}
+\centro{CENTRO DE CIÊNCIAS E TECNOLOGIA - CCT}
+\departamento{DEPARTAMENTO DE COMPUTAÇÃO}
+\curso{CURSO DE CIÊNCIA DA COMPUTAÇÃO}
+
+\autores{
+    Antonio Wenicios Ademar da Silva \\
+    Julia Beatriz Pamplona de Sousa \\
+    Julio Pedro da Silva \\
+    Livia Sousa Silva Ferreira    \\
+    Thales Henrique de Souza Teles \\
+}
+
+\titulo{TRANSFORMAÇÕES DE COORDENADAS}
+
+\cidadeuf{Campina Grande - PB}
+\dataano{2026}
+
+\imprimircapa
+
+\tableofcontents
+\newpage
+
+\input{secoes/01-introducao}
+\input{secoes/02-objetivos}
+\input{secoes/03-fundamentacao}
+\input{secoes/04-metodologia}
+\input{secoes/05-implementacao}
+\input{secoes/06-resultados}
+\input{secoes/07-conclusao}
+\input{secoes/08-referencias}
+
+\end{document}

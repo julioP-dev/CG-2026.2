@@ -1,0 +1,142 @@
+% paineis_tikz.sty
+% Macros de desenho dos diagramas de sistemas de coordenadas (painéis TikZ)
+% usados na Fundamentação teórica do relatório. 
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
+
+\tikzset{
+    dim/.style={{Stealth[length=1.8mm]}-{Stealth[length=1.8mm]}, thin, blue!60!black},
+    ext/.style={dotted, gray, thin},
+    proj/.style={densely dashed, gray},
+    bi/.style={{Stealth[length=2.5mm]}-{Stealth[length=2.5mm]}, thick, red!75!black}
+}
+
+
+% Painel que desenha um sistema de coordenadas com um ponto de exemplo.
+% Parâmetros (definidos com \def antes da chamada):
+%   \pw,\ph  : largura e altura da caixa (cm)     \fx,\fy : posição relativa do ponto (0 a 1)
+%   \cen     : 1 = eixos passando pelo centro     \dims   : 1 = desenha as cotas (Delta e largura total)
+%   \flipy   : 0 (padrão) = origem no canto inferior esquerdo e y para cima (convenção de Foley et al.); 1 = y para baixo, como no raster do Java
+%   \lxa,\lxb,\lya,\lyb : rótulos dos extremos    \lpt    : rótulo do ponto
+%   \ldx,\ltx,\ldy,\lty : rótulos das cotas       \ptit   : título do painel
+\newcommand{\resetpainel}{%
+    \def\pw{4.8}\def\ph{3.8}\def\fx{0.75}\def\fy{0.6}\def\cen{0}\def\dims{0}%
+    \def\lxa{}\def\lxb{}\def\lya{}\def\lyb{}\def\lpt{}\def\flipy{0}%
+    \def\ldx{}\def\ltx{}\def\ldy{}\def\lty{}\def\ptit{}\def\lfont{\footnotesize}%
+}
+\newcommand{\painel}[1]{%
+    \pgfmathsetmacro{\px}{\fx*\pw}%
+    \ifnum\flipy=1 \pgfmathsetmacro{\py}{(1-\fy)*\ph}\else \pgfmathsetmacro{\py}{\fy*\ph}\fi%
+    \pgfmathsetmacro{\cx}{\pw/2}\pgfmathsetmacro{\cy}{\ph/2}%
+    \fill[gray!8] (0,0) rectangle (\pw,\ph);
+    \draw[thick] (0,0) rectangle (\pw,\ph);
+    \ifnum\flipy=1
+        \ifnum\cen=1
+            \draw[-{Stealth[length=2.2mm]}] (-0.3,\cy) -- (\pw+0.4,\cy) node[right] {\footnotesize $x$};
+            \draw[-{Stealth[length=2.2mm]}] (\cx,\ph+0.3) -- (\cx,-0.4) node[below] {\footnotesize $y$};
+            \node[font=\scriptsize, anchor=south east, inner sep=1pt] at (\cx,\cy) {$0$};
+            \node[anchor=north west, font=\footnotesize, inner sep=2pt] at (0,\cy) {\lxa};
+            \node[anchor=north east, font=\footnotesize, inner sep=2pt] at (\pw,\cy) {\lxb};
+            \node[anchor=south west, font=\footnotesize, inner sep=2pt] at (\cx,\ph) {\lya};
+            \node[anchor=north west, font=\footnotesize, inner sep=2pt] at (\cx,0) {\lyb};
+        \else
+            \draw[-{Stealth[length=2.2mm]}] (0,\ph) -- (\pw+0.4,\ph) node[right] {\footnotesize $x$};
+            \draw[-{Stealth[length=2.2mm]}] (0,\ph) -- (0,-0.4) node[below] {\footnotesize $y$};
+            \node[above, font=\footnotesize] at (0,\ph) {\lxa};
+            \node[above, font=\footnotesize] at (\pw,\ph) {\lxb};
+            \node[anchor=east, font=\footnotesize, yshift=-1.6mm] at (0,\ph) {\lya};
+            \node[left, font=\footnotesize] at (0,0) {\lyb};
+        \fi
+    \else
+    \ifnum\cen=1
+        \draw[-{Stealth[length=2.2mm]}] (-0.3,\cy) -- (\pw+0.4,\cy) node[right] {\footnotesize $x$};
+        \draw[-{Stealth[length=2.2mm]}] (\cx,-0.3) -- (\cx,\ph+0.4) node[above] {\footnotesize $y$};
+        \node[font=\scriptsize, anchor=north east, inner sep=1pt] at (\cx,\cy) {$0$};
+        \node[anchor=north west, font=\footnotesize, inner sep=2pt] at (0,\cy) {\lxa};
+        \node[anchor=north east, font=\footnotesize, inner sep=2pt] at (\pw,\cy) {\lxb};
+        \node[anchor=north west, font=\footnotesize, inner sep=2pt] at (\cx,0) {\lya};
+        \node[anchor=south west, font=\footnotesize, inner sep=2pt] at (\cx,\ph) {\lyb};
+    \else
+        \draw[-{Stealth[length=2.2mm]}] (0,0) -- (\pw+0.4,0) node[right] {\footnotesize $x$};
+        \draw[-{Stealth[length=2.2mm]}] (0,0) -- (0,\ph+0.4) node[above] {\footnotesize $y$};
+        \node[below, font=\footnotesize] at (0,0) {\lxa};
+        \node[below, font=\footnotesize] at (\pw,0) {\lxb};
+        \node[anchor=east, font=\footnotesize, yshift=1.6mm] at (0,0) {\lya};
+        \node[left, font=\footnotesize] at (0,\ph) {\lyb};
+    \fi
+    \fi
+    \ifnum\flipy=1
+        \draw[proj] (0,\py) -- (\px,\py) -- (\px,\ph);
+    \else
+        \draw[proj] (0,\py) -- (\px,\py) -- (\px,0);
+    \fi
+    \coordinate (#1-P) at (\px,\py);
+    \fill[red!75!black] (#1-P) circle (1.7pt);
+    \ifnum\cen=1 \ifnum\flipy=1
+        % eixos centrados com y para baixo: o rótulo vai abaixo do ponto para não cair sobre o eixo x
+        \node[below left, font=\lfont, red!75!black, inner sep=1.5pt, fill=gray!8, yshift=-1.2mm] at (#1-P) {\lpt};
+    \else
+        \node[above left, font=\lfont, red!75!black, inner sep=1.5pt, fill=gray!8, yshift=1.2mm] at (#1-P) {\lpt};
+    \fi\else
+        \node[above left, font=\lfont, red!75!black, inner sep=1.5pt, fill=gray!8, yshift=1.2mm] at (#1-P) {\lpt};
+    \fi
+    \ifx\ptit\empty\else
+        \ifnum\dims=1 \ifnum\flipy=1 \def\tyoff{1.65}\else\def\tyoff{0.85}\fi\else\def\tyoff{0.85}\fi
+        \node[font=\footnotesize\bfseries, above] at (\cx,\ph+\tyoff) {\ptit};
+    \fi
+    \ifnum\dims=1
+    \ifnum\flipy=1
+        % cotas horizontais (acima da caixa, pois o eixo x fica no topo)
+        \draw[ext] (\px,\ph) -- (\px,\ph+0.7);
+        \draw[ext] (0,\ph+0.45) -- (0,\ph+1.25);
+        \draw[ext] (\pw,\ph+0.45) -- (\pw,\ph+1.25);
+        \draw[dim] (0,\ph+0.7) -- node[midway, fill=white, inner sep=1pt, font=\scriptsize] {\ldx} (\px,\ph+0.7);
+        \draw[dim] (0,\ph+1.2) -- node[midway, fill=white, inner sep=1pt, font=\scriptsize] {\ltx} (\pw,\ph+1.2);
+        % cotas verticais (à esquerda da caixa), medidas a partir do topo
+        \draw[ext] (0,\py) -- (-1.25,\py);
+        \draw[ext] (-1.0,0) -- (-1.85,0);
+        \draw[ext] (-1.0,\ph) -- (-1.85,\ph);
+        \draw[dim] (-1.25,\py) -- node[midway, sloped, fill=white, inner sep=1pt, font=\scriptsize] {\ldy} (-1.25,\ph);
+        \draw[dim] (-1.85,0) -- node[midway, sloped, fill=white, inner sep=1pt, font=\scriptsize] {\lty} (-1.85,\ph);
+    \else
+        % cotas horizontais (abaixo da caixa)
+        \draw[ext] (\px,0) -- (\px,-0.7);
+        \draw[ext] (0,-0.45) -- (0,-1.25);
+        \draw[ext] (\pw,-0.45) -- (\pw,-1.25);
+        \draw[dim] (0,-0.7) -- node[midway, fill=white, inner sep=1pt, font=\scriptsize] {\ldx} (\px,-0.7);
+        \draw[dim] (0,-1.2) -- node[midway, fill=white, inner sep=1pt, font=\scriptsize] {\ltx} (\pw,-1.2);
+        % cotas verticais (à esquerda da caixa)
+        \draw[ext] (0,\py) -- (-1.25,\py);
+        \draw[ext] (-1.0,0) -- (-1.85,0);
+        \draw[ext] (-1.0,\ph) -- (-1.85,\ph);
+        \draw[dim] (-1.25,0) -- node[midway, sloped, fill=white, inner sep=1pt, font=\scriptsize] {\ldy} (-1.25,\py);
+        \draw[dim] (-1.85,0) -- node[midway, sloped, fill=white, inner sep=1pt, font=\scriptsize] {\lty} (-1.85,\ph);
+    \fi
+    \fi
+}
+
+% Presets de cada sistema (rótulos simbólicos)
+\newcommand{\presetmundo}{\def\ptit{Mundo}\def\cen{0}\def\lfont{\footnotesize}%
+    \def\lxa{$x_{wmin}$}\def\lxb{$x_{wmax}$}\def\lya{$y_{wmin}$}\def\lyb{$y_{wmax}$}%
+    \def\lpt{$P_w = (x_w, y_w)$}%
+    \def\ldx{$\Delta x_w$}\def\ltx{$x_{wmax} - x_{wmin}$}\def\ldy{$\Delta y_w$}\def\lty{$y_{wmax} - y_{wmin}$}}
+\newcommand{\presetndci}{\def\ptit{NDC $[0,1] \times [0,1]$}\def\cen{0}\def\lfont{\scriptsize}%
+    \def\lxa{$0$}\def\lxb{$1$}\def\lya{}\def\lyb{$1$}%
+    \def\lpt{$P_n = (x_n^{(i)}, y_n^{(i)})$}%
+    \def\ldx{$\Delta x_n^{(i)}$}\def\ltx{$1 - 0$}\def\ldy{$\Delta y_n^{(i)}$}\def\lty{$1 - 0$}}
+\newcommand{\presetndcii}{\def\ptit{NDC $[-1,1] \times [-1,1]$}\def\cen{1}\def\lfont{\scriptsize}%
+    \def\lxa{$-1$}\def\lxb{$1$}\def\lya{$-1$}\def\lyb{$1$}%
+    \def\lpt{$P_n = (x_n^{(ii)}, y_n^{(ii)})$}%
+    \def\ldx{$\Delta x_n^{(ii)}$}\def\ltx{$1 - (-1)$}\def\ldy{$\Delta y_n^{(ii)}$}\def\lty{$1 - (-1)$}}
+\newcommand{\presetdc}{\def\ptit{Dispositivo (DC)}\def\cen{0}\def\lfont{\footnotesize}%
+    \def\lxa{$0$}\def\lxb{$W-1$}\def\lya{}\def\lyb{$H-1$}%
+    \def\lpt{$P_d = (x_d, y_d)$}%
+    \def\ldx{$\Delta x_d$}\def\ltx{$(W-1) - 0$}\def\ldy{$\Delta y_d$}\def\lty{$(H-1) - 0$}}
+
+% Figura de conversão entre dois sistemas (seta nos dois sentidos)
+\newcommand{\mapafig}[2]{%
+    \begin{tikzpicture}
+        \begin{scope}\resetpainel #1 \painel{A}\end{scope}
+        \begin{scope}[xshift=7.6cm]\resetpainel #2 \painel{B}\end{scope}
+        \draw[bi] (A-P) -- node[pos=0.35, above, font=\scriptsize, fill=white, inner sep=1pt] {mesma razão} (B-P);
+    \end{tikzpicture}}

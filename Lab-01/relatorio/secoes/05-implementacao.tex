@@ -1,0 +1,49 @@
+\section{Implementação}
+
+\subsection{Organização do código}
+A implementação foi estruturada em diferentes classes, de modo a separar as responsabilidades da aplicação. Essa organização permite que a representação dos dados, os cálculos matemáticos, a interface gráfica e a manipulação do display sejam tratados de forma independente.
+
+A classe \texttt{Ponto} foi utilizada para representar coordenadas bidimensionais. Ela possui os atributos \texttt{x} e \texttt{y}, além de métodos de acesso e alteração desses valores. Dessa forma, as coordenadas utilizadas durante as transformações podem ser encapsuladas em objetos.
+
+A classe \texttt{JanelaMundo} concentra os valores referentes aos limites do espaço de mundo. Seu construtor e seus métodos de alteração realizam verificações para garantir que os valores mínimos sejam menores que os valores máximos.
+
+A classe \texttt{Transformacao} concentra os métodos responsáveis pelos cálculos matemáticos. Os métodos recebem os pontos e os parâmetros necessários para cada transformação e retornam novos objetos \texttt{Ponto} contendo os valores calculados.
+
+A classe \texttt{Display} é responsável pela representação do display por meio de um \texttt{BufferedImage}. Já a classe \texttt{JanelaPrincipal} realiza a integração entre os componentes, controlando a interface, a entrada do mouse e a execução das transformações.
+
+Por fim, a classe \texttt{Main} contém o ponto de inicialização da aplicação e cria a janela principal.
+
+\subsection{Implementação das funções de transformação}
+As funções de transformação foram implementadas de forma independente na classe \texttt{Transformacao}. Essa abordagem permite que cada operação matemática seja executada por um método específico.
+
+Para a conversão da entrada para NDC \mbox{[0,1]}, foi implementado o método \texttt{inpToNdc01()}. Para NDC \mbox{[-1,1]}, foi utilizado o método \texttt{inpToNdc11()}.
+
+As transformações entre NDC e a janela de mundo foram separadas nos métodos \texttt{ndc01ToUser()}, \texttt{userToNdc01()}, \texttt{ndc11ToUser()} e \texttt{userToNdc11()}. Também foram implementados os métodos \texttt{ndc01ToDc()} e \texttt{ndc11ToDc()}, responsáveis pela conversão das coordenadas normalizadas para as coordenadas do dispositivo.
+
+Além dos cálculos, a classe possui o método privado \texttt{validarDimensoes()}, utilizado para verificar se as dimensões fornecidas para o display são válidas antes da realização das operações que dependem da largura e da altura.
+
+\subsection{Implementação da entrada do mouse}
+A captura da posição do mouse foi implementada na classe \texttt{JanelaPrincipal} por meio de um \textit{listener} de eventos. O evento de movimentação fornece as coordenadas do cursor em relação ao display. Esses valores são utilizados para criar um objeto do tipo \texttt{Ponto}, que logo após é encaminhado aos métodos da classe \texttt{Transformacao}.
+
+A atualização das informações da interface e do pixel ativo ocorre dentro do método responsável por processar essas coordenadas. Dessa forma, a movimentação do cursor provoca a atualização contínua dos valores apresentados e da posição do pixel.
+
+\subsection{Implementação do display}
+A representação do display foi implementada na classe \texttt{Display} utilizando a classe \texttt{BufferedImage}. A imagem possui exatamente $800 \times 600$ posições, correspondentes à resolução que foi definida para a aplicação.
+
+O método \texttt{drawPixel()} recebe as coordenadas inteiras do pixel que deverá ser ativado. Antes de realizar a alteração, o método verifica se as coordenadas estão dentro dos limites da imagem. Quando a posição é válida, o método \texttt{setRGB()} altera diretamente o valor de cor daquela posição. A cor utilizada para o pixel ativo é obtida a partir de \texttt{Color.GREEN}.
+
+A limpeza do display é realizada pelo método \texttt{limpar()}, que preenche a imagem com a cor de fundo antes da ativação de uma nova posição. A imagem armazenada no \texttt{BufferedImage} é posteriormente apresentada pelo método \texttt{paintComponent()}, responsável por desenhá-la no componente gráfico.
+
+\subsection{Implementação da interface e configuração da janela de mundo}
+A interface gráfica foi construída utilizando componentes do Swing. A classe \texttt{JanelaPrincipal} organiza o display, as informações das coordenadas e os campos destinados à configuração da janela de mundo.
+
+Os campos de texto são utilizados para receber os valores de $x_{wmin}$, $x_{wmax}$, $y_{wmin}$ e $y_{wmax}$. Quando o usuário solicita a aplicação dos novos valores, o método responsável pela atualização realiza a conversão dos dados para \texttt{double} e cria uma nova instância de \texttt{JanelaMundo}.
+
+A implementação também trata possíveis entradas inválidas. Valores que não podem ser convertidos para números ou que não respeitam os limites necessários são tratados por exceções e apresentados ao usuário por meio de mensagens na interface.
+
+\subsection{Integração da implementação}
+A integração entre as classes ocorre principalmente na \texttt{JanelaPrincipal}. Quando uma nova posição do mouse é recebida, a classe cria o ponto inicial e utiliza os métodos da \texttt{Transformacao} para obter os valores correspondentes aos diferentes sistemas de coordenadas. Depois das transformações necessárias, a coordenada final é arredondada com \texttt{Math.round()} e enviada para o método \texttt{drawPixel()} da classe \texttt{Display}.
+
+A separação entre essas responsabilidades permite que os cálculos de transformação permaneçam independentes da implementação gráfica. Ao adotar esse modelo, a classe \texttt{Transformacao} não precisa conhecer os componentes da interface ou a forma como o pixel é desenhado, enquanto \texttt{Display} não precisa realizar os cálculos matemáticos das coordenadas.
+
+Essa estrutura mantém a implementação organizada e permite relacionar diretamente cada parte do código com sua respectiva função dentro da aplicação.
