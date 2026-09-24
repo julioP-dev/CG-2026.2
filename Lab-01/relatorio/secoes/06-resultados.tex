@@ -7,20 +7,20 @@ Nas tabelas, os pares de coordenadas reais são escritos com ponto e vírgula en
 
 % ------------------------------------------------------------
 \subsection{Funcionamento do programa}
-Ao ser iniciado, o programa exibe o display de $800 \times 600$ pixels com fundo preto, o painel lateral com os campos da janela de mundo (inicialmente $[-100, 100] \times [-100, 100]$), o seletor do sistema NDC e o painel de consulta de ponto, além da área inferior em que são mostradas as coordenadas de dispositivo, NDC \mbox{[0,1]}, NDC \mbox{[-1,1]} e mundo.
+Ao ser iniciado, o programa exibe o display de $800 \times 600$ pixels com fundo preto, o painel lateral com os campos da janela de mundo (inicialmente $[-100, 100] \times [-100, 100]$), o seletor do sistema NDC e o painel de consulta de ponto, além da área inferior em que são mostradas as coordenadas de dispositivo, NDC \mbox{[0,1]}, NDC \mbox{[-1,1]} e mundo e, quando necessário, a linha de alerta. Esses valores são atualizados continuamente enquanto o mouse se move ou é arrastado sobre o display.
 
 As Figuras~\ref{fig:resultado-ndc01} e~\ref{fig:resultado-ndc11} mostram a consulta do ponto $P_w = (0, 0)$, centro da janela de mundo padrão, com cada um dos sistemas NDC selecionados. Em ambos os casos, o pixel ativado é $(400, 300)$ e os valores exibidos são idênticos, pois a interface sempre apresenta o ponto nos dois sistemas; muda apenas o conjunto de funções utilizado internamente para chegar ao pixel.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{ndc01.png}
+    \includegraphics[width=0.75\textwidth]{imagens/resultados/ndc01.png}
     \caption{Consulta do ponto $P_w = (0, 0)$ com o sistema NDC $[0,1]$ (\texttt{ZERO\_A\_UM}) selecionado.}
     \label{fig:resultado-ndc01}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{ndc11.png}
+    \includegraphics[width=0.75\textwidth]{imagens/resultados/ndc11.png}
     \caption{Consulta do mesmo ponto $P_w = (0, 0)$ com o sistema NDC $[-1,1]$ (\texttt{MENOS\_UM\_A\_UM}) selecionado. O pixel ativado é o mesmo da Figura~\ref{fig:resultado-ndc01}.}
     \label{fig:resultado-ndc11}
 \end{figure}
@@ -55,7 +55,7 @@ Os cantos da janela de mundo foram levados exatamente aos cantos do display, e o
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{consulta50-50.png}
+    \includegraphics[width=0.75\textwidth]{imagens/resultados/consulta50-50.png}
     \caption{Consulta do ponto $P_w = (50, 50)$ com a janela de mundo padrão.}
     \label{fig:res-consulta-50-50}
 \end{figure}
@@ -63,7 +63,7 @@ Os cantos da janela de mundo foram levados exatamente aos cantos do display, e o
 % ------------------------------------------------------------
 \subsection{Ativação de pixels por clique}
 \label{subsec:res-clique}
-A Tabela~\ref{tab:res-clique} apresenta o resultado de cliques em diferentes posições do display, com a janela de mundo padrão. Para cada clique, o ponto foi levado ao mundo pelo NDC selecionado e trazido de volta ao dispositivo. As colunas de mundo e pixel final são as mesmas nos dois sistemas NDC.
+A Tabela~\ref{tab:res-clique} apresenta o resultado de cliques em diferentes posições do display, com a janela de mundo padrão. Como o mouse é rastreado continuamente, os mesmos valores são obtidos ao simplesmente posicionar o mouse ou arrastá-lo até essas posições, já que os três eventos executam o mesmo método. Para cada clique, o ponto foi levado ao mundo pelo NDC selecionado e trazido de volta ao dispositivo. As colunas de mundo e pixel final são as mesmas nos dois sistemas NDC.
 
 \begin{table}[H]
     \centering
@@ -90,14 +90,14 @@ O clique em $(400, 300)$ não corresponde exatamente à origem do mundo, mas a $
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{clique-ndc01.png}
+    \includegraphics[width=0.75\textwidth]{imagens/resultados/clique-ndc01.png}
     \caption{Ativação de pixel por clique na posição $(200, 150)$ com o sistema NDC $[0,1]$ selecionado.}
     \label{fig:res-clique-ndc01}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{clique-ndc11.png}
+    \includegraphics[width=0.75\textwidth]{imagens/resultados/clique-ndc11.png}
     \caption{Ativação de pixel por clique na mesma posição, $(200, 150)$, com o sistema NDC $[-1,1]$ selecionado. O pixel e os valores exibidos são os mesmos da Figura~\ref{fig:res-clique-ndc01}.}
     \label{fig:res-clique-ndc11}
 \end{figure}
@@ -135,14 +135,14 @@ Os valores de NDC do clique em $(400, 300)$ são os mesmos para todas as janelas
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{janela-exemplo.png}
+    \includegraphics[width=0.75\textwidth]{imagens/resultados/janela-exemplo.png}
     \caption{Consulta do ponto do exemplo numérico após a alteração da janela de mundo.}
     \label{fig:res-janela-exemplo}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{janela-assimetrica.png}
+    \includegraphics[width=0.75\textwidth]{imagens/resultados/janela-assimetrica.png}
     \caption{Consulta de ponto com uma janela de mundo de escalas diferentes em cada eixo.}
     \label{fig:res-janela-assimetrica}
 \end{figure}
@@ -188,10 +188,37 @@ A última linha mostra que os valores decimais devem ser digitados com ponto (po
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{erro-janela.png}
+    \includegraphics[width=0.75\textwidth]{imagens/resultados/erro-janela.png}
     \caption{Mensagem de erro para uma janela de mundo inválida.}
     \label{fig:res-erro-janela}
 \end{figure}
+
+% ------------------------------------------------------------
+\subsection{Coordenadas fora dos limites}
+\label{subsec:res-fora-limites}
+A Tabela~\ref{tab:res-fora-limites} apresenta, para a janela de mundo padrão, os valores que as transformações produzem para coordenadas fora do display. Esses valores não são exibidos pela interface: em seu lugar, ela mostra ``fora dos limites'' e a mensagem de alerta.
+
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.35}
+    \small
+    \begin{tabular}{c|c|c|c|c}
+        \textbf{Entrada} & \textbf{NDC [0,1]} & \textbf{NDC [-1,1]} & \textbf{Pixel} & \textbf{Resultado} \\ \hline
+        mouse $(-15, 320)$     & $(-0{,}0188;\ 0{,}5342)$ & $(-1{,}0375;\ 0{,}0684)$ & $(-15, 320)$  & alerta \\
+        mouse $(850, 100)$     & $(1{,}0638;\ 0{,}1669)$  & $(1{,}1277;\ -0{,}6661)$ & $(850, 100)$  & alerta \\
+        mouse $(400, -5)$      & $(0{,}5006;\ -0{,}0083)$ & $(0{,}0013;\ -1{,}0167)$ & $(400, -5)$   & alerta \\
+        consulta $(150;\ 0)$   & $(1{,}25;\ 0{,}5)$       & $(1{,}5;\ 0)$            & $(999, 300)$  & alerta \\
+        consulta $(0;\ -120)$  & $(0{,}5;\ -0{,}1)$       & $(0;\ -1{,}2)$           & $(400, -60)$  & alerta \\
+        consulta $(-100{,}2;\ 100)$ & $(-0{,}001;\ 1)$    & $(-1{,}002;\ 1)$         & $(-1, 599)$   & alerta \\
+        consulta $(100{,}1;\ 100)$  & $(1{,}0005;\ 1)$    & $(1{,}001;\ 1)$          & $(799, 599)$  & pixel ativado
+    \end{tabular}
+    \caption{Coordenadas fora dos limites com a janela $[-100, 100] \times [-100, 100]$.}
+    \label{tab:res-fora-limites}
+\end{table}
+
+Sem a verificação, essas entradas resultariam em valores de NDC fora dos intervalos $[0,1]$ e $[-1,1]$ e em pixels negativos ou maiores que as dimensões do display. Nos casos do mouse, o alerta aparece apenas na linha da interface; nos casos de consulta, aparece também em uma caixa de diálogo.
+
+A última linha mostra um efeito do arredondamento: como a verificação é feita sobre o pixel já arredondado, um ponto do mundo que ultrapassa a janela por menos de meio pixel (aqui, $0{,}1$ unidade, enquanto meio pixel equivale a $0{,}2503/2 \approx 0{,}125$ unidade) ainda é levado a um pixel válido da borda, $(799, 599)$, e não gera alerta. Já o ponto $(-100{,}2;\ 100)$ ultrapassa esse limite e é levado ao pixel $x_d = -1$, fora do display.
 
 % ------------------------------------------------------------
 \subsection{Orientação do eixo \texorpdfstring{$y$}{y}}
@@ -200,13 +227,13 @@ Como discutido na Seção~\ref{sec:metodologia}, a implementação não inverte 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{orientacao-y.png}
+    \includegraphics[width=0.75\textwidth]{imagens/resultados/orientacao-y.png}
     \caption{Ponto do canto superior esquerdo da janela de mundo ativado no canto inferior esquerdo do display.}
     \label{fig:res-orientacao}
 \end{figure}
 
 % ------------------------------------------------------------
 \subsection{Síntese dos resultados}
-Os testes mostraram que as transformações implementadas reproduzem as expressões deduzidas na Seção~\ref{sec:fundamentacao-teorica}: os cantos e o centro da janela de mundo foram levados às posições esperadas do display, o exemplo numérico calculado manualmente foi reproduzido pelo programa, e os dois sistemas NDC levaram sempre ao mesmo pixel. O percurso de ida e volta a partir de um clique preservou o pixel em todas as posições do display, e o erro de posição ficou limitado a meio pixel, como previsto pelo arredondamento.
+Os testes mostraram que as transformações implementadas reproduzem as expressões deduzidas na Seção~\ref{sec:fundamentacao-teorica}: os cantos e o centro da janela de mundo foram levados às posições esperadas do display, o exemplo numérico calculado manualmente foi reproduzido pelo programa, e os dois sistemas NDC levaram sempre ao mesmo pixel. O percurso de ida e volta a partir de um clique preservou o pixel em todas as posições do display, e o erro de posição ficou limitado a meio pixel, como previsto pelo arredondamento. Coordenadas fora do display, obtidas ao arrastar o mouse para fora dele ou ao consultar pontos fora da janela de mundo, não produzem valores inválidos na interface, e sim uma mensagem de alerta.
 
 Também foram observados comportamentos que devem ser considerados no uso do programa: a orientação do eixo $y$ no display é invertida em relação à convenção da aula e, como a janela padrão é quadrada e o display tem proporção $4:3$, as escalas horizontal e vertical de um pixel no mundo são diferentes.

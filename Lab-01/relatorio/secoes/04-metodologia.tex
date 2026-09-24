@@ -9,9 +9,9 @@ A classe \texttt{Main} é responsável pela inicialização do programa. A \text
 \subsection{Entradas do sistema}
 A aplicação aceita duas formas de entrada, que percorrem o pipeline de transformações em sentidos diferentes.
 
-\paragraph{Clique do mouse.} A primeira entrada é a posição de um clique do mouse sobre o display. O display possui resolução de $800 \times 600$ pixels, sendo que a origem das coordenadas começa no canto superior esquerdo.
+\paragraph{Posição do mouse.} A primeira entrada é a posição do mouse sobre o display. O display possui resolução de $800 \times 600$ pixels, sendo que a origem das coordenadas começa no canto superior esquerdo.
 
-Quando o usuário clica sobre o display, a aplicação obtém as coordenadas $x$ e $y$ fornecidas pelo evento de clique do mouse e cria um objeto do tipo \texttt{Ponto} com tais valores. A coordenada obtida, $P_{inp} = (x_{inp}, y_{inp})$, é utilizada como entrada para as transformações. O clique é capturado por um \textit{listener} associado ao display, de modo que cada clique substitui o pixel ativo anterior pela nova posição.
+A posição do mouse é rastreada continuamente: as conversões são realizadas automaticamente sempre que o mouse se move sobre o display, quando um botão é pressionado e enquanto o mouse é arrastado com o botão pressionado. A cada um desses eventos, a aplicação obtém as coordenadas $x$ e $y$ fornecidas pelo evento e cria um objeto do tipo \texttt{Ponto} com tais valores. A coordenada obtida, $P_{inp} = (x_{inp}, y_{inp})$, é utilizada como entrada para as transformações. Os eventos são capturados por um \textit{listener} associado ao display, de modo que cada nova posição substitui o pixel ativo anterior e atualiza os valores exibidos, sem a necessidade de clicar.
 
 \paragraph{Consulta de ponto do mundo.} A segunda entrada é um ponto $P_w = (x_w, y_w)$ digitado pelo usuário no painel \textit{Consultar Ponto do Mundo}. Ao pressionar o botão \textit{Mostrar no display}, o ponto é convertido para coordenadas de dispositivo e o pixel correspondente é ativado. Essa entrada permite verificar diretamente o mapeamento Mundo $\rightarrow$ DC para valores escolhidos, como os do exemplo numérico da Seção~\ref{sec:fundamentacao-teorica}.
 
@@ -21,7 +21,7 @@ Em ambos os casos, a interface apresenta os valores correspondentes à coordenad
 \label{subsec:selecao-ndc}
 Um seletor (\textit{combo box}) no painel \textit{Sistema NDC} permite escolher qual dos dois cenários de normalização é utilizado no pipeline: \texttt{ZERO\_A\_UM}, correspondente ao cenário (i), ou \texttt{MENOS\_UM\_A\_UM}, correspondente ao cenário (ii). O valor inicial é \texttt{ZERO\_A\_UM}.
 
-A troca do sistema altera apenas quais funções de transformação serão utilizadas nas próximas interações; ela não dispara, por si só, uma nova ativação de pixel. Dessa forma, o pixel não é deslocado para um ponto que o usuário não solicitou, e o próximo clique ou consulta já utiliza o sistema escolhido. Independentemente da seleção, a interface sempre exibe o ponto nos dois sistemas NDC, o que permite compará-los.
+A troca do sistema altera apenas quais funções de transformação serão utilizadas nas próximas interações; ela não dispara, por si só, uma nova ativação de pixel. Dessa forma, o pixel não é deslocado para um ponto que o usuário não solicitou, e a próxima movimentação do mouse ou consulta já utiliza o sistema escolhido. Independentemente da seleção, a interface sempre exibe o ponto nos dois sistemas NDC, o que permite compará-los.
 
 \subsection{Transformações implementadas}
 As transformações foram implementadas na classe \texttt{Transformacao}, aplicando diretamente as expressões já deduzidas na Seção~\ref{sec:fundamentacao-teorica} (Fundamentação teórica), que coincidem com as fórmulas da \aularef\ (inclusive por não inverterem o eixo $y$ entre o NDC e o dispositivo), para $W$ e $H$ correspondendo à largura e à altura do display. Quando o sistema selecionado é o NDC \mbox{$[0,1] \times [0,1]$}, o caminho utilizado para a ativação do pixel emprega as seguintes expressões:
@@ -59,6 +59,12 @@ A classe utiliza um \texttt{BufferedImage} com resolução de $800 \times 600$ p
 
 Antes de ativar o novo pixel, o display é limpo. Dessa forma, somente a posição correspondente à coordenada atual permanece destacada.
 
+\subsection{Coordenadas fora dos limites}
+\label{subsec:fora-limites}
+Uma coordenada pode ficar fora dos limites do display em duas situações. A primeira ocorre durante o arraste: ao manter o botão pressionado e levar o mouse para fora do display, o Swing continua enviando eventos, agora com coordenadas negativas ou maiores que $799$ (em $x$) e $599$ (em $y$). A segunda ocorre na consulta de um ponto do mundo situado fora da janela de mundo, que, pelas transformações, é levado a uma posição fora do display.
+
+Nesses casos, as transformações produziriam valores fora dos intervalos válidos, como NDC negativos ou maiores que $1$ e coordenadas de dispositivo negativas, que não correspondem a nenhum pixel. Por isso, a aplicação verifica, antes de exibir as conversões, se a coordenada de dispositivo está dentro do display. Quando não está, o pixel ativo é apagado, os valores de dispositivo, NDC e mundo são substituídos pela indicação ``fora dos limites'' e uma mensagem de alerta é exibida. Para o mouse, o alerta é mostrado em uma linha da própria interface, em vez de uma caixa de diálogo, que seria aberta repetidamente durante o arraste. Para a consulta de ponto do mundo, além dessa linha, é exibida uma caixa de diálogo de aviso.
+
 \subsection{Interface para definição da janela de mundo}
 A aplicação possui uma pequena interface que permite ao usuário definir os limites da janela de mundo. São disponibilizados campos para:
 \begin{itemize}
@@ -69,21 +75,21 @@ A aplicação possui uma pequena interface que permite ao usuário definir os li
 \end{itemize}
 Inicialmente, os campos são preenchidos com os valores $x_{wmin} = -100$, $x_{wmax} = 100$, $y_{wmin} = -100$ e $y_{wmax} = 100$.
 
-O usuário pode alterar esses valores e pressionar o botão \textit{Aplicar}. A aplicação realiza a conversão dos valores informados para o tipo \texttt{double} e cria uma nova instância de \texttt{JanelaMundo} com os limites fornecidos. A nova janela passa a ser utilizada a partir da próxima interação (clique ou consulta).
+O usuário pode alterar esses valores e pressionar o botão \textit{Aplicar}. A aplicação realiza a conversão dos valores informados para o tipo \texttt{double} e cria uma nova instância de \texttt{JanelaMundo} com os limites fornecidos. A nova janela passa a ser utilizada a partir da próxima interação (movimento do mouse ou consulta).
 
 A classe \texttt{JanelaMundo} verifica se os valores fornecidos formam uma janela válida, exigindo que o valor mínimo seja menor que o valor máximo em ambos os eixos. Caso sejam informados valores não numéricos ou limites inválidos, a aplicação apresenta uma mensagem de erro ao usuário e mantém a janela anterior.
 
 \subsection{Fluxo geral da solução}
-De forma resumida, o funcionamento da solução pode ser representado por dois fluxos. O primeiro corresponde ao clique do mouse:
+De forma resumida, o funcionamento da solução pode ser representado por dois fluxos. O primeiro corresponde à posição do mouse:
 \[
     \text{Mouse} \Rightarrow \text{INP} \Rightarrow \text{NDC} \Rightarrow \text{USER} \Rightarrow \text{NDC} \Rightarrow \text{DC} \Rightarrow \text{Pixel}
 \]
-O mouse fornece a coordenada inicial utilizada pelo nosso programa, as funções da classe \texttt{Transformacao} realizam as conversões, a janela de mundo fornece os limites para a transformação, e o \texttt{Display} utiliza a coordenada final para ativar diretamente o pixel correspondente. O percurso completo, de ida ao mundo e volta ao dispositivo, garante que o pixel ativado seja o resultado das transformações no sistema NDC selecionado, e não simplesmente a posição bruta do clique.
+O mouse fornece a coordenada inicial utilizada pelo nosso programa, as funções da classe \texttt{Transformacao} realizam as conversões, a janela de mundo fornece os limites para a transformação, e o \texttt{Display} utiliza a coordenada final para ativar diretamente o pixel correspondente. O percurso completo, de ida ao mundo e volta ao dispositivo, garante que o pixel ativado seja o resultado das transformações no sistema NDC selecionado, e não simplesmente a posição bruta do mouse.
 
 O segundo fluxo corresponde à consulta de um ponto do mundo:
 \[
     \text{USER} \Rightarrow \text{NDC} \Rightarrow \text{DC} \Rightarrow \text{Pixel}
 \]
-Em ambos os fluxos, a etapa NDC utiliza o sistema escolhido no seletor (Subseção~\ref{subsec:selecao-ndc}).
+Em ambos os fluxos, a etapa NDC utiliza o sistema escolhido no seletor (Subseção~\ref{subsec:selecao-ndc}), e coordenadas fora do display são interrompidas antes da ativação do pixel, gerando um alerta (Subseção~\ref{subsec:fora-limites}).
 
 A aplicação apresenta as coordenadas intermediárias na interface, permitindo acompanhar visualmente o resultado das transformações realizadas.
