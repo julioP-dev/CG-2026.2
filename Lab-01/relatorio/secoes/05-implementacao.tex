@@ -23,9 +23,19 @@ As transformações entre NDC e a janela de mundo foram separadas nos métodos \
 Além dos cálculos, a classe possui o método privado \texttt{validarDimensoes()}, utilizado para verificar se as dimensões fornecidas para o display são válidas antes da realização das operações que dependem da largura e da altura.
 
 \subsection{Implementação da entrada do mouse}
-A captura da posição do mouse foi implementada na classe \texttt{JanelaPrincipal} por meio de um \textit{listener} de eventos. O evento de movimentação fornece as coordenadas do cursor em relação ao display. Esses valores são utilizados para criar um objeto do tipo \texttt{Ponto}, que logo após é encaminhado aos métodos da classe \texttt{Transformacao}.
+A captura da posição do mouse foi implementada na classe \texttt{JanelaPrincipal}, no método \texttt{configurarMouse()}, por meio de um \texttt{MouseInputAdapter} registrado no display. O método \texttt{mouseClicked()} desse \textit{listener} fornece as coordenadas do clique em relação ao display. Esses valores são encaminhados ao método \texttt{ativarPixelPorClique()}, que cria um objeto do tipo \texttt{Ponto} e o repassa aos métodos da classe \texttt{Transformacao}.
 
-A atualização das informações da interface e do pixel ativo ocorre dentro do método responsável por processar essas coordenadas. Dessa forma, a movimentação do cursor provoca a atualização contínua dos valores apresentados e da posição do pixel.
+Em \texttt{ativarPixelPorClique()}, o ponto de entrada é convertido para os dois sistemas NDC (\texttt{inpToNdc01()} e \texttt{inpToNdc11()}). Em seguida, o ponto do mundo é obtido a partir do NDC selecionado (\texttt{ndc01ToUser()} ou \texttt{ndc11ToUser()}) e convertido de volta para coordenadas de dispositivo pelo método auxiliar \texttt{mundoParaDispositivo()}. A atualização do pixel ativo e das informações da interface ocorre ao final desse método, de modo que cada clique produz uma nova ativação.
+
+\subsection{Implementação da seleção do sistema NDC}
+O sistema NDC em uso é armazenado no atributo \texttt{ndcAtual} da \texttt{JanelaPrincipal}, do tipo \texttt{TipoNDC}. O seletor é um \texttt{JComboBox} preenchido com \texttt{TipoNDC.values()}; seu \textit{listener} apenas atualiza \texttt{ndcAtual} com o item escolhido.
+
+O método \texttt{mundoParaDispositivo()} centraliza o uso desse atributo: quando \texttt{ndcAtual} vale \texttt{ZERO\_A\_UM}, utiliza \texttt{userToNdc01()} seguido de \texttt{ndc01ToDc()}; caso contrário, utiliza \texttt{userToNdc11()} seguido de \texttt{ndc11ToDc()}. Esse método é compartilhado pelas duas formas de entrada, o que garante que o clique e a consulta de ponto empreguem sempre o mesmo pipeline.
+
+\subsection{Implementação da consulta de ponto do mundo}
+O painel \textit{Consultar Ponto do Mundo} possui dois campos de texto, para $x_w$ e $y_w$, e o botão \textit{Mostrar no display}. Ao ser pressionado, o botão executa o método \texttt{consultarPontoMundo()}, que converte os valores digitados para \texttt{double}, cria o \texttt{Ponto} correspondente e obtém suas coordenadas de dispositivo por meio de \texttt{mundoParaDispositivo()}. O resultado é arredondado com \texttt{Math.round()} e enviado a \texttt{drawPixel()}. Valores não numéricos são tratados por uma \texttt{NumberFormatException}, que resulta em uma mensagem de erro.
+
+Os valores exibidos na parte inferior da janela são atualizados pelo método \texttt{atualizarLabels()}. Na consulta de ponto, esse método recalcula o ponto nos dois sistemas NDC (\texttt{userToNdc01()} e \texttt{userToNdc11()}) apenas para fins de exibição.
 
 \subsection{Implementação do display}
 A representação do display foi implementada na classe \texttt{Display} utilizando a classe \texttt{BufferedImage}. A imagem possui exatamente $800 \times 600$ posições, correspondentes à resolução que foi definida para a aplicação.
@@ -35,14 +45,14 @@ O método \texttt{drawPixel()} recebe as coordenadas inteiras do pixel que dever
 A limpeza do display é realizada pelo método \texttt{limpar()}, que preenche a imagem com a cor de fundo antes da ativação de uma nova posição. A imagem armazenada no \texttt{BufferedImage} é posteriormente apresentada pelo método \texttt{paintComponent()}, responsável por desenhá-la no componente gráfico.
 
 \subsection{Implementação da interface e configuração da janela de mundo}
-A interface gráfica foi construída utilizando componentes do Swing. A classe \texttt{JanelaPrincipal} organiza o display, as informações das coordenadas e os campos destinados à configuração da janela de mundo.
+A interface gráfica foi construída utilizando componentes do Swing. A classe \texttt{JanelaPrincipal} utiliza um \texttt{BorderLayout}: o display ocupa a região central, as informações das coordenadas ficam na região inferior e um painel lateral, à direita, agrupa os painéis \textit{Janela do Mundo}, \textit{Sistema NDC} e \textit{Consultar Ponto do Mundo}. A janela é dimensionada com \texttt{pack()}, centralizada na tela e não pode ser redimensionada, o que mantém o display com exatamente $800 \times 600$ pixels.
 
 Os campos de texto são utilizados para receber os valores de $x_{wmin}$, $x_{wmax}$, $y_{wmin}$ e $y_{wmax}$. Quando o usuário solicita a aplicação dos novos valores, o método responsável pela atualização realiza a conversão dos dados para \texttt{double} e cria uma nova instância de \texttt{JanelaMundo}.
 
 A implementação também trata possíveis entradas inválidas. Valores que não podem ser convertidos para números ou que não respeitam os limites necessários são tratados por exceções e apresentados ao usuário por meio de mensagens na interface.
 
 \subsection{Integração da implementação}
-A integração entre as classes ocorre principalmente na \texttt{JanelaPrincipal}. Quando uma nova posição do mouse é recebida, a classe cria o ponto inicial e utiliza os métodos da \texttt{Transformacao} para obter os valores correspondentes aos diferentes sistemas de coordenadas. Depois das transformações necessárias, a coordenada final é arredondada com \texttt{Math.round()} e enviada para o método \texttt{drawPixel()} da classe \texttt{Display}.
+A integração entre as classes ocorre principalmente na \texttt{JanelaPrincipal}. Quando um clique é recebido ou um ponto do mundo é consultado, a classe cria o ponto inicial e utiliza os métodos da \texttt{Transformacao}, de acordo com o sistema NDC selecionado, para obter os valores correspondentes aos diferentes sistemas de coordenadas. Depois das transformações necessárias, a coordenada final é arredondada com \texttt{Math.round()} e enviada para o método \texttt{drawPixel()} da classe \texttt{Display}.
 
 A separação entre essas responsabilidades permite que os cálculos de transformação permaneçam independentes da implementação gráfica. Ao adotar esse modelo, a classe \texttt{Transformacao} não precisa conhecer os componentes da interface ou a forma como o pixel é desenhado, enquanto \texttt{Display} não precisa realizar os cálculos matemáticos das coordenadas.
 

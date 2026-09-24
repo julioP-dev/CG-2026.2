@@ -1,21 +1,212 @@
 \section{Resultados}
+\label{sec:resultados}
 
+Esta seção apresenta os resultados obtidos com a execução do programa. Os valores numéricos das tabelas foram obtidos por meio de uma simulação que utilizou as próprias classes \texttt{Ponto}, \texttt{JanelaMundo}, \texttt{TipoNDC} e \texttt{Transformacao} do projeto, sem modificações, reproduzindo a mesma sequência de chamadas realizada pela \texttt{JanelaPrincipal} nos métodos \texttt{ativarPixelPorClique()}, \texttt{consultarPontoMundo()} e \texttt{mundoParaDispositivo()}, com um display de $W = 800$ por $H = 600$ pixels. As capturas de tela reproduzem, na interface, os mesmos casos da simulação. Como o pixel ativo ocupa uma única posição do display, ele foi destacado nas capturas por um círculo vermelho, acrescentado à imagem apenas para facilitar sua localização.
+
+Nas tabelas, os pares de coordenadas reais são escritos com ponto e vírgula entre as componentes, e as coordenadas de dispositivo são apresentadas antes do arredondamento (\emph{DC real}) e depois dele (\emph{pixel}).
+
+% ------------------------------------------------------------
 \subsection{Funcionamento do programa}
+Ao ser iniciado, o programa exibe o display de $800 \times 600$ pixels com fundo preto, o painel lateral com os campos da janela de mundo (inicialmente $[-100, 100] \times [-100, 100]$), o seletor do sistema NDC e o painel de consulta de ponto, além da área inferior em que são mostradas as coordenadas de dispositivo, NDC \mbox{[0,1]}, NDC \mbox{[-1,1]} e mundo.
 
-\subsection{Exemplos de coordenadas}
-
-\subsection{DC [0,1] e [-1,1]}
+As Figuras~\ref{fig:resultado-ndc01} e~\ref{fig:resultado-ndc11} mostram a consulta do ponto $P_w = (0, 0)$, centro da janela de mundo padrão, com cada um dos sistemas NDC selecionados. Em ambos os casos, o pixel ativado é $(400, 300)$ e os valores exibidos são idênticos, pois a interface sempre apresenta o ponto nos dois sistemas; muda apenas o conjunto de funções utilizado internamente para chegar ao pixel.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{imagens/resultados/ndc01.png}
-    \caption{Visualização da janela gráfica projetando ponto utilizando proporção $0$ a $1$.}
+    \includegraphics[width=0.75\textwidth]{ndc01.png}
+    \caption{Consulta do ponto $P_w = (0, 0)$ com o sistema NDC $[0,1]$ (\texttt{ZERO\_A\_UM}) selecionado.}
     \label{fig:resultado-ndc01}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{imagens/resultados/ndc11.png}
-    \caption{Visualização com centro deslocado, simulando mapeamento NDC $-1$ a $1$.}
+    \includegraphics[width=0.75\textwidth]{ndc11.png}
+    \caption{Consulta do mesmo ponto $P_w = (0, 0)$ com o sistema NDC $[-1,1]$ (\texttt{MENOS\_UM\_A\_UM}) selecionado. O pixel ativado é o mesmo da Figura~\ref{fig:resultado-ndc01}.}
     \label{fig:resultado-ndc11}
 \end{figure}
+
+O valor $(400, 300)$ decorre do arredondamento: o centro exato do display é $(399{,}5;\ 299{,}5)$, pois os índices dos pixels vão de $0$ a $W-1 = 799$ e de $0$ a $H-1 = 599$, e a função \texttt{Math.round()} arredonda a metade para cima.
+
+% ------------------------------------------------------------
+\subsection{Consulta de pontos do mundo}
+\label{subsec:res-consulta}
+Com a janela de mundo padrão, foram consultados os quatro cantos da janela, seu centro e alguns pontos internos. A Tabela~\ref{tab:res-consulta} apresenta os resultados. Para todos os pontos, os dois sistemas NDC produziram exatamente o mesmo pixel, de modo que apenas uma coluna de pixel é apresentada.
+
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.35}
+    \small
+    \begin{tabular}{c|c|c|c|c}
+        \textbf{Mundo} & \textbf{NDC [0,1]} & \textbf{NDC [-1,1]} & \textbf{DC real} & \textbf{Pixel} \\ \hline
+        $(0;\ 0)$           & $(0{,}5;\ 0{,}5)$        & $(0;\ 0)$                 & $(399{,}50;\ 299{,}50)$ & $(400, 300)$ \\
+        $(-100;\ -100)$     & $(0;\ 0)$                & $(-1;\ -1)$               & $(0;\ 0)$               & $(0, 0)$ \\
+        $(100;\ 100)$       & $(1;\ 1)$                & $(1;\ 1)$                 & $(799;\ 599)$           & $(799, 599)$ \\
+        $(-100;\ 100)$      & $(0;\ 1)$                & $(-1;\ 1)$                & $(0;\ 599)$             & $(0, 599)$ \\
+        $(100;\ -100)$      & $(1;\ 0)$                & $(1;\ -1)$                & $(799;\ 0)$             & $(799, 0)$ \\
+        $(50;\ 50)$         & $(0{,}75;\ 0{,}75)$      & $(0{,}5;\ 0{,}5)$         & $(599{,}25;\ 449{,}25)$ & $(599, 449)$ \\
+        $(-50;\ 25)$        & $(0{,}25;\ 0{,}625)$     & $(-0{,}5;\ 0{,}25)$       & $(199{,}75;\ 374{,}38)$ & $(200, 374)$ \\
+        $(33{,}3;\ -66{,}6)$ & $(0{,}6665;\ 0{,}167)$  & $(0{,}333;\ -0{,}666)$    & $(532{,}53;\ 100{,}03)$ & $(533, 100)$
+    \end{tabular}
+    \caption{Consulta de pontos do mundo com a janela $[-100, 100] \times [-100, 100]$.}
+    \label{tab:res-consulta}
+\end{table}
+
+Os cantos da janela de mundo foram levados exatamente aos cantos do display, e os valores normalizados permaneceram nos intervalos esperados, $[0,1]$ e $[-1,1]$, para todos os pontos. Os valores do NDC $[-1,1]$ obedecem à relação $x_n^{(ii)} = 2\,x_n^{(i)} - 1$ em todas as linhas, como previsto na Subseção~\ref{subsec:sintese}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{consulta50-50.png}
+    \caption{Consulta do ponto $P_w = (50, 50)$ com a janela de mundo padrão.}
+    \label{fig:res-consulta-50-50}
+\end{figure}
+
+% ------------------------------------------------------------
+\subsection{Ativação de pixels por clique}
+\label{subsec:res-clique}
+A Tabela~\ref{tab:res-clique} apresenta o resultado de cliques em diferentes posições do display, com a janela de mundo padrão. Para cada clique, o ponto foi levado ao mundo pelo NDC selecionado e trazido de volta ao dispositivo. As colunas de mundo e pixel final são as mesmas nos dois sistemas NDC.
+
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.35}
+    \small
+    \begin{tabular}{c|c|c|c|c}
+        \textbf{Clique} & \textbf{NDC [0,1]} & \textbf{NDC [-1,1]} & \textbf{Mundo} & \textbf{Pixel final} \\ \hline
+        $(0, 0)$     & $(0;\ 0)$                 & $(-1;\ -1)$                 & $(-100;\ -100)$             & $(0, 0)$ \\
+        $(799, 0)$   & $(1;\ 0)$                 & $(1;\ -1)$                  & $(100;\ -100)$              & $(799, 0)$ \\
+        $(0, 599)$   & $(0;\ 1)$                 & $(-1;\ 1)$                  & $(-100;\ 100)$              & $(0, 599)$ \\
+        $(799, 599)$ & $(1;\ 1)$                 & $(1;\ 1)$                   & $(100;\ 100)$               & $(799, 599)$ \\
+        $(400, 300)$ & $(0{,}5006;\ 0{,}5008)$   & $(0{,}0013;\ 0{,}0017)$     & $(0{,}1252;\ 0{,}1669)$     & $(400, 300)$ \\
+        $(200, 150)$ & $(0{,}2503;\ 0{,}2504)$   & $(-0{,}4994;\ -0{,}4992)$   & $(-49{,}9374;\ -49{,}9165)$ & $(200, 150)$ \\
+        $(600, 450)$ & $(0{,}7509;\ 0{,}7513)$   & $(0{,}5019;\ 0{,}5025)$     & $(50{,}1877;\ 50{,}2504)$   & $(600, 450)$ \\
+        $(123, 456)$ & $(0{,}1539;\ 0{,}7613)$   & $(-0{,}6921;\ 0{,}5225)$    & $(-69{,}2115;\ 52{,}2538)$  & $(123, 456)$
+    \end{tabular}
+    \caption{Cliques no display com a janela $[-100, 100] \times [-100, 100]$.}
+    \label{tab:res-clique}
+\end{table}
+
+Em todos os casos, o pixel final coincidiu com o pixel clicado, o que mostra que o percurso de ida e volta pelo mundo não desloca o ponto. Os cliques nos cantos do display correspondem exatamente aos cantos da janela de mundo.
+
+O clique em $(400, 300)$ não corresponde exatamente à origem do mundo, mas a $(0{,}1252;\ 0{,}1669)$. Isso ocorre porque o centro do display, $(399{,}5;\ 299{,}5)$, não é um pixel inteiro, e cada pixel representa uma faixa de valores do mundo. Com a janela padrão, um pixel equivale a $200/799 \approx 0{,}2503$ unidades do mundo na horizontal e a $200/599 \approx 0{,}3339$ unidades na vertical, de modo que o deslocamento observado é de meio pixel em cada eixo.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{clique-ndc01.png}
+    \caption{Ativação de pixel por clique na posição $(200, 150)$ com o sistema NDC $[0,1]$ selecionado.}
+    \label{fig:res-clique-ndc01}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{clique-ndc11.png}
+    \caption{Ativação de pixel por clique na mesma posição, $(200, 150)$, com o sistema NDC $[-1,1]$ selecionado. O pixel e os valores exibidos são os mesmos da Figura~\ref{fig:res-clique-ndc01}.}
+    \label{fig:res-clique-ndc11}
+\end{figure}
+
+% ------------------------------------------------------------
+\subsection{Alteração da janela de mundo}
+\label{subsec:res-janela}
+Para verificar a alteração da janela de mundo, foi aplicada a janela $[-2, 6] \times [-1, 4]$, a mesma do exemplo numérico da Seção~\ref{sec:fundamentacao-teorica}, e, em seguida, a janela $[0, 1000] \times [0, 10]$, cujos eixos têm escalas muito diferentes. A Tabela~\ref{tab:res-janela} apresenta os resultados.
+
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.35}
+    \small
+    \begin{tabular}{c|c|c|c|c}
+        \textbf{Entrada} & \textbf{NDC [0,1]} & \textbf{NDC [-1,1]} & \textbf{Mundo} & \textbf{Pixel} \\ \hline
+        \multicolumn{5}{c}{Janela $[-2, 6] \times [-1, 4]$} \\ \hline
+        consulta $(4;\ 2)$    & $(0{,}75;\ 0{,}6)$       & $(0{,}5;\ 0{,}2)$         & $(4;\ 2)$                 & $(599, 359)$ \\
+        consulta $(0;\ 0)$    & $(0{,}25;\ 0{,}2)$       & $(-0{,}5;\ -0{,}6)$       & $(0;\ 0)$                 & $(200, 120)$ \\
+        consulta $(-2;\ -1)$  & $(0;\ 0)$                & $(-1;\ -1)$               & $(-2;\ -1)$               & $(0, 0)$ \\
+        consulta $(6;\ 4)$    & $(1;\ 1)$                & $(1;\ 1)$                 & $(6;\ 4)$                 & $(799, 599)$ \\
+        clique $(599, 359)$   & $(0{,}7497;\ 0{,}5993)$  & $(0{,}4994;\ 0{,}1987)$   & $(3{,}9975;\ 1{,}9967)$   & $(599, 359)$ \\
+        clique $(400, 300)$   & $(0{,}5006;\ 0{,}5008)$  & $(0{,}0013;\ 0{,}0017)$   & $(2{,}0050;\ 1{,}5042)$   & $(400, 300)$ \\ \hline
+        \multicolumn{5}{c}{Janela $[0, 1000] \times [0, 10]$} \\ \hline
+        consulta $(500;\ 5)$    & $(0{,}5;\ 0{,}5)$      & $(0;\ 0)$                 & $(500;\ 5)$               & $(400, 300)$ \\
+        consulta $(250;\ 7{,}5)$ & $(0{,}25;\ 0{,}75)$   & $(-0{,}5;\ 0{,}5)$        & $(250;\ 7{,}5)$           & $(200, 449)$ \\
+        clique $(400, 300)$     & $(0{,}5006;\ 0{,}5008)$ & $(0{,}0013;\ 0{,}0017)$  & $(500{,}6258;\ 5{,}0083)$ & $(400, 300)$
+    \end{tabular}
+    \caption{Resultados após a alteração da janela de mundo.}
+    \label{tab:res-janela}
+\end{table}
+
+Com a janela $[-2, 6] \times [-1, 4]$, a consulta de $P_w = (4, 2)$ ativou o pixel $(599, 359)$, e o clique nesse pixel recuperou o ponto $(3{,}9975;\ 1{,}9967)$. Esses valores coincidem com os calculados manualmente no exemplo numérico da Seção~\ref{sec:fundamentacao-teorica} (Figuras~\ref{fig:exemplo-i} e~\ref{fig:exemplo-ii}), o que valida a implementação em relação às deduções.
+
+Os valores de NDC do clique em $(400, 300)$ são os mesmos para todas as janelas, pois a normalização da entrada depende apenas do tamanho do display. A alteração da janela modifica somente a etapa NDC $\rightarrow$ Mundo. Com a janela $[0, 1000] \times [0, 10]$, cada pixel representa cerca de $1{,}2516$ unidades do mundo na horizontal e apenas $0{,}0167$ na vertical, o que evidencia que a transformação aplica escalas independentes em cada eixo.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{janela-exemplo.png}
+    \caption{Consulta do ponto do exemplo numérico após a alteração da janela de mundo.}
+    \label{fig:res-janela-exemplo}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{janela-assimetrica.png}
+    \caption{Consulta de ponto com uma janela de mundo de escalas diferentes em cada eixo.}
+    \label{fig:res-janela-assimetrica}
+\end{figure}
+
+% ------------------------------------------------------------
+\subsection{Equivalência entre os sistemas NDC}
+\label{subsec:res-equivalencia}
+Para verificar de forma mais ampla os resultados das subseções anteriores, a simulação percorreu todas as posições do display e um grande número de pontos do mundo, para cada uma das três janelas utilizadas ($[-100, 100]^2$, $[-2, 6] \times [-1, 4]$ e $[0, 1000] \times [0, 10]$). Os resultados foram os mesmos para as três janelas:
+
+\begin{itemize}
+    \item \textbf{Ida e volta a partir do dispositivo:} para as $800 \times 600 = 480\,000$ posições de clique possíveis, o pixel final coincidiu com o pixel clicado em todos os casos, tanto com o NDC $[0,1]$ quanto com o NDC $[-1,1]$;
+    \item \textbf{Mesmo ponto no mundo:} a maior diferença entre o ponto do mundo obtido pelos dois sistemas NDC, para um mesmo clique, foi da ordem de $10^{-14}$, ou seja, apenas erro de arredondamento de ponto flutuante;
+    \item \textbf{Mesmo pixel:} para $1\,000\,000$ de pontos do mundo sorteados dentro da janela, os dois sistemas NDC ativaram exatamente o mesmo pixel;
+    \item \textbf{Erro de posição:} ao converter esses pontos para pixel e de volta para o mundo, o maior erro observado foi de $0{,}5$ pixel em cada eixo, o limite previsto para o arredondamento ao inteiro mais próximo.
+\end{itemize}
+
+Esses resultados confirmam experimentalmente a conclusão da Subseção~\ref{subsec:sintese}: a escolha entre o NDC $[0,1]$ e o NDC $[-1,1]$ altera apenas os valores intermediários, e não o pixel final nem o ponto recuperado no mundo.
+
+% ------------------------------------------------------------
+\subsection{Validação das entradas}
+\label{subsec:res-validacao}
+A Tabela~\ref{tab:res-validacao} apresenta o comportamento do programa para diferentes valores digitados nos campos da janela de mundo. Nos casos de erro, a mensagem é exibida em uma caixa de diálogo e a janela de mundo anterior é mantida.
+
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.35}
+    \small
+    \begin{tabular}{c|c|c|c|l}
+        \textbf{X mín.} & \textbf{X máx.} & \textbf{Y mín.} & \textbf{Y máx.} & \textbf{Resultado} \\ \hline
+        \texttt{-100} & \texttt{100} & \texttt{-100} & \texttt{100} & janela aceita \\
+        \texttt{10}   & \texttt{10}  & \texttt{0}    & \texttt{5}   & ``Xmin deve ser menor que Xmax.'' \\
+        \texttt{10}   & \texttt{-10} & \texttt{0}    & \texttt{5}   & ``Xmin deve ser menor que Xmax.'' \\
+        \texttt{0}    & \texttt{5}   & \texttt{3}    & \texttt{3}   & ``Ymin deve ser menor que Ymax.'' \\
+        \texttt{abc}  & \texttt{1}   & \texttt{0}    & \texttt{1}   & ``Digite apenas valores numéricos.'' \\
+        (vazio)       & \texttt{1}   & \texttt{0}    & \texttt{1}   & ``Digite apenas valores numéricos.'' \\
+        \texttt{1,5}  & \texttt{3}   & \texttt{0}    & \texttt{1}   & ``Digite apenas valores numéricos.''
+    \end{tabular}
+    \caption{Validação dos limites da janela de mundo.}
+    \label{tab:res-validacao}
+\end{table}
+
+A última linha mostra que os valores decimais devem ser digitados com ponto (por exemplo, \texttt{1.5}), pois a conversão é feita por \texttt{Double.parseDouble()}, que não aceita a vírgula como separador decimal. No painel de consulta de ponto, valores não numéricos produzem a mensagem ``Digite apenas valores numéricos para o ponto do mundo.''.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{erro-janela.png}
+    \caption{Mensagem de erro para uma janela de mundo inválida.}
+    \label{fig:res-erro-janela}
+\end{figure}
+
+% ------------------------------------------------------------
+\subsection{Orientação do eixo \texorpdfstring{$y$}{y}}
+\label{subsec:res-orientacao}
+Como discutido na Seção~\ref{sec:metodologia}, a implementação não inverte o eixo $y$ e o raster do Java cresce para baixo. A Tabela~\ref{tab:res-consulta} confirma esse comportamento: o ponto $(-100;\ 100)$, canto superior esquerdo da janela de mundo, foi ativado no pixel $(0, 599)$, que corresponde ao canto \emph{inferior} esquerdo do display, enquanto o ponto $(-100;\ -100)$ foi ativado no pixel $(0, 0)$, no canto superior esquerdo. Da mesma forma, o ponto $(-50;\ 25)$, que está acima da origem no mundo, aparece abaixo do centro do display. A imagem no display é, portanto, um espelhamento vertical da imagem no mundo.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{orientacao-y.png}
+    \caption{Ponto do canto superior esquerdo da janela de mundo ativado no canto inferior esquerdo do display.}
+    \label{fig:res-orientacao}
+\end{figure}
+
+% ------------------------------------------------------------
+\subsection{Síntese dos resultados}
+Os testes mostraram que as transformações implementadas reproduzem as expressões deduzidas na Seção~\ref{sec:fundamentacao-teorica}: os cantos e o centro da janela de mundo foram levados às posições esperadas do display, o exemplo numérico calculado manualmente foi reproduzido pelo programa, e os dois sistemas NDC levaram sempre ao mesmo pixel. O percurso de ida e volta a partir de um clique preservou o pixel em todas as posições do display, e o erro de posição ficou limitado a meio pixel, como previsto pelo arredondamento.
+
+Também foram observados comportamentos que devem ser considerados no uso do programa: a orientação do eixo $y$ no display é invertida em relação à convenção da aula e, como a janela padrão é quadrada e o display tem proporção $4:3$, as escalas horizontal e vertical de um pixel no mundo são diferentes.

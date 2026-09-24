@@ -2,44 +2,52 @@
 \label{sec:metodologia}
 
 \subsection{Arquitetura do programa}
-A solução proposta foi desenvolvida em Java, com uso das bibliotecas gráficas nativas da linguagem. A arquitetura é composta pelas classes \texttt{Main}, \texttt{JanelaPrincipal}, \texttt{Ponto}, \texttt{JanelaMundo}, \texttt{Transformacao} e \texttt{Display}.
+A solução proposta foi desenvolvida em Java, com uso das bibliotecas gráficas nativas da linguagem (Swing e AWT). A arquitetura é composta pelas classes \texttt{Main}, \texttt{JanelaPrincipal}, \texttt{Ponto}, \texttt{JanelaMundo}, \texttt{Transformacao} e \texttt{Display}, e pela enumeração \texttt{TipoNDC}.
 
-A classe \texttt{Main} é responsável pela inicialização do programa. A \texttt{JanelaPrincipal} concentra a interface gráfica e coordena a interação com o usuário, a classe \texttt{Ponto} representa coordenadas, \texttt{JanelaMundo} armazena os limites definidos para o espaço de mundo, a classe \texttt{Transformacao} concentra as transformações utilizadas durante o programa, já a classe \texttt{Display} é responsável pela representação gráfica e pela ativação do pixel correspondente à posição calculada.
+A classe \texttt{Main} é responsável pela inicialização do programa. A \texttt{JanelaPrincipal} concentra a interface gráfica e coordena a interação com o usuário, a classe \texttt{Ponto} representa coordenadas, \texttt{JanelaMundo} armazena os limites definidos para o espaço de mundo, a classe \texttt{Transformacao} concentra as transformações utilizadas durante o programa, já a classe \texttt{Display} é responsável pela representação gráfica e pela ativação do pixel correspondente à posição calculada. A enumeração \texttt{TipoNDC} identifica os dois sistemas normalizados disponíveis, \texttt{ZERO\_A\_UM} (NDC \mbox{$[0,1] \times [0,1]$}) e \texttt{MENOS\_UM\_A\_UM} (NDC \mbox{$[-1,1] \times [-1,1]$}).
 
-\subsection{Entrada pelo mouse}
-Optamos por utilizar a posição do mouse sobre o display como coordenada de entrada do sistema. O display possui resolução de $800 \times 600$ pixels, sendo que a origem das coordenadas começa no canto superior esquerdo.
+\subsection{Entradas do sistema}
+A aplicação aceita duas formas de entrada, que percorrem o pipeline de transformações em sentidos diferentes.
 
-Quando o mouse é movimentado sobre o display, a nossa aplicação obtém as coordenadas $x$ e $y$ fornecidas pelo evento de movimento do mouse e cria um objeto do tipo \texttt{Ponto} com tais valores. A coordenada obtida, $P_d = (x_d, y_d)$, é utilizada como entrada para as transformações.
+\paragraph{Clique do mouse.} A primeira entrada é a posição de um clique do mouse sobre o display. O display possui resolução de $800 \times 600$ pixels, sendo que a origem das coordenadas começa no canto superior esquerdo.
 
-A aplicação acompanha o movimento do mouse por meio de um \textit{listener} associado ao display. Dessa maneira, o pixel ativo é atualizado de acordo com a posição atual do cursor.
+Quando o usuário clica sobre o display, a aplicação obtém as coordenadas $x$ e $y$ fornecidas pelo evento de clique do mouse e cria um objeto do tipo \texttt{Ponto} com tais valores. A coordenada obtida, $P_{inp} = (x_{inp}, y_{inp})$, é utilizada como entrada para as transformações. O clique é capturado por um \textit{listener} associado ao display, de modo que cada clique substitui o pixel ativo anterior pela nova posição.
 
-A interface apresenta os valores correspondentes à coordenada de entrada, ao NDC \mbox{[0,1]}, ao NDC \mbox{[-1,1]} e à posição equivalente na janela de mundo.
+\paragraph{Consulta de ponto do mundo.} A segunda entrada é um ponto $P_w = (x_w, y_w)$ digitado pelo usuário no painel \textit{Consultar Ponto do Mundo}. Ao pressionar o botão \textit{Mostrar no display}, o ponto é convertido para coordenadas de dispositivo e o pixel correspondente é ativado. Essa entrada permite verificar diretamente o mapeamento Mundo $\rightarrow$ DC para valores escolhidos, como os do exemplo numérico da Seção~\ref{sec:fundamentacao-teorica}.
+
+Em ambos os casos, a interface apresenta os valores correspondentes à coordenada de dispositivo, ao NDC \mbox{[0,1]}, ao NDC \mbox{[-1,1]} e à posição equivalente na janela de mundo.
+
+\subsection{Seleção do sistema NDC}
+\label{subsec:selecao-ndc}
+Um seletor (\textit{combo box}) no painel \textit{Sistema NDC} permite escolher qual dos dois cenários de normalização é utilizado no pipeline: \texttt{ZERO\_A\_UM}, correspondente ao cenário (i), ou \texttt{MENOS\_UM\_A\_UM}, correspondente ao cenário (ii). O valor inicial é \texttt{ZERO\_A\_UM}.
+
+A troca do sistema altera apenas quais funções de transformação serão utilizadas nas próximas interações; ela não dispara, por si só, uma nova ativação de pixel. Dessa forma, o pixel não é deslocado para um ponto que o usuário não solicitou, e o próximo clique ou consulta já utiliza o sistema escolhido. Independentemente da seleção, a interface sempre exibe o ponto nos dois sistemas NDC, o que permite compará-los.
 
 \subsection{Transformações implementadas}
-As transformações foram implementadas na classe \texttt{Transformacao}, aplicando diretamente as expressões já deduzidas na Seção~\ref{sec:fundamentacao-teorica} (Fundamentação teórica), que coincidem com as fórmulas da \aularef\ (inclusive por não inverterem o eixo $y$ entre o NDC e o dispositivo), para $W$ e $H$ correspondendo à largura e à altura do display. O caminho efetivamente utilizado para a ativação do pixel emprega o cenário NDC \mbox{$[0,1] \times [0,1]$}:
+As transformações foram implementadas na classe \texttt{Transformacao}, aplicando diretamente as expressões já deduzidas na Seção~\ref{sec:fundamentacao-teorica} (Fundamentação teórica), que coincidem com as fórmulas da \aularef\ (inclusive por não inverterem o eixo $y$ entre o NDC e o dispositivo), para $W$ e $H$ correspondendo à largura e à altura do display. Quando o sistema selecionado é o NDC \mbox{$[0,1] \times [0,1]$}, o caminho utilizado para a ativação do pixel emprega as seguintes expressões:
 
 \begin{itemize}
-    \item \textbf{Entrada $\rightarrow$ NDC} (\texttt{inp\_to\_ndc}), mesma forma da Equação~\eqref{eq:dc-ndc-i}, com $x_{inp}, y_{inp}$ no lugar de $x_d, y_d$:
+    \item \textbf{Entrada $\rightarrow$ NDC} (\texttt{inpToNdc01}), mesma forma da Equação~\eqref{eq:dc-ndc-i}, com $x_{inp}, y_{inp}$ no lugar de $x_d, y_d$:
     \[
         x_n^{(i)} = \frac{x_{inp}}{W-1}, \qquad y_n^{(i)} = \frac{y_{inp}}{H-1}.
     \]
-    \item \textbf{NDC $\rightarrow$ Mundo} (\texttt{ndc\_to\_user}), Equação~\eqref{eq:ndc-user-i}:
+    \item \textbf{NDC $\rightarrow$ Mundo} (\texttt{ndc01ToUser}), Equação~\eqref{eq:ndc-user-i}:
     \[
         x_w = x_{wmin} + x_n^{(i)} \, (x_{wmax} - x_{wmin}), \qquad
         y_w = y_{wmin} + y_n^{(i)} \, (y_{wmax} - y_{wmin}).
     \]
-    \item \textbf{Mundo $\rightarrow$ NDC} (\texttt{user\_to\_ndc}), Equação~\eqref{eq:user-ndc-i}:
+    \item \textbf{Mundo $\rightarrow$ NDC} (\texttt{userToNdc01}), Equação~\eqref{eq:user-ndc-i}:
     \[
         x_n^{(i)} = \frac{x_w - x_{wmin}}{x_{wmax} - x_{wmin}}, \qquad
         y_n^{(i)} = \frac{y_w - y_{wmin}}{y_{wmax} - y_{wmin}}.
     \]
-    \item \textbf{NDC $\rightarrow$ DC} (\texttt{ndc\_to\_dc}), Equação~\eqref{eq:ndc-dc-i} sem o arredondamento final, aplicado apenas na etapa de ativação do pixel (Seção~\ref{subsec:ativacao-pixel}):
+    \item \textbf{NDC $\rightarrow$ DC} (\texttt{ndc01ToDc}), Equação~\eqref{eq:ndc-dc-i} sem o arredondamento final, aplicado apenas na etapa de ativação do pixel (Seção~\ref{subsec:ativacao-pixel}):
     \[
         x_d = x_n^{(i)} \, (W-1), \qquad y_d = y_n^{(i)} \, (H-1).
     \]
 \end{itemize}
 
-A classe \texttt{Transformacao} implementa igualmente o cenário NDC \mbox{$[-1,1] \times [-1,1]$} --- \texttt{user\_to\_ndc}, \texttt{ndc\_to\_user}, \texttt{ndc\_to\_dc} e \texttt{inp\_to\_ndc} ---, conforme as Equações~\eqref{eq:user-ndc-ii}, \eqref{eq:ndc-user-ii}, \eqref{eq:ndc-dc-ii} e \eqref{eq:dc-ndc-ii}. Esse cenário é calculado e exibido na interface, mas não compõe o caminho final de ativação do pixel, por representar apenas uma normalização alternativa e equivalente do mesmo ponto.
+Quando o sistema selecionado é o NDC \mbox{$[-1,1] \times [-1,1]$}, as mesmas quatro etapas são realizadas pelos métodos \texttt{inpToNdc11}, \texttt{ndc11ToUser}, \texttt{userToNdc11} e \texttt{ndc11ToDc}, conforme as Equações~\eqref{eq:dc-ndc-ii}, \eqref{eq:ndc-user-ii}, \eqref{eq:user-ndc-ii} e \eqref{eq:ndc-dc-ii}. Como demonstrado na Subseção~\ref{subsec:sintese}, os dois cenários levam ao mesmo pixel final; a escolha altera apenas os valores intermediários exibidos e o conjunto de funções exercitado.
 
 Vale observar que a implementação não inverte o eixo $y$ entre o NDC e o dispositivo, como nas fórmulas da aula, e que o raster do Java tem origem no canto superior esquerdo, com $y$ crescendo para baixo. Assim, diferentemente da convenção adotada na Seção~\ref{sec:fundamentacao-teorica} (origem no canto inferior esquerdo, $y$ para cima), no display um ponto com $y_w$ maior é ativado em uma linha mais baixa, e a imagem aparece espelhada verticalmente.
 
@@ -47,7 +55,7 @@ Vale observar que a implementação não inverte o eixo $y$ entre o NDC e o disp
 \label{subsec:ativacao-pixel}
 Após a realização das transformações, as coordenadas finais do dispositivo podem possuir valores fracionários. Como a posição de um pixel é representada por coordenadas inteiras, os valores obtidos são arredondados utilizando \texttt{Math.round()}. As coordenadas resultantes são enviadas ao método \texttt{drawPixel()} pertencente à classe \texttt{Display}.
 
-A classe utiliza um \texttt{BufferedImage} com resolução de $800 \times 600$ pixels. O método \texttt{drawPixel()} verifica se a posição está dentro dos limites do display e, caso esteja, altera diretamente a cor daquele pixel por meio do método \texttt{setRGB()}. O pixel ativo é representado pela cor verde (\texttt{\#00FF00}).
+A classe utiliza um \texttt{BufferedImage} com resolução de $800 \times 600$ pixels e fundo preto. O método \texttt{drawPixel()} verifica se a posição está dentro dos limites do display e, caso esteja, altera diretamente a cor daquele pixel por meio do método \texttt{setRGB()}. O pixel ativo é representado pela cor verde (\texttt{\#00FF00}). Caso a posição esteja fora dos limites, o display apenas é limpo e nenhum pixel é ativado.
 
 Antes de ativar o novo pixel, o display é limpo. Dessa forma, somente a posição correspondente à coordenada atual permanece destacada.
 
@@ -61,15 +69,21 @@ A aplicação possui uma pequena interface que permite ao usuário definir os li
 \end{itemize}
 Inicialmente, os campos são preenchidos com os valores $x_{wmin} = -100$, $x_{wmax} = 100$, $y_{wmin} = -100$ e $y_{wmax} = 100$.
 
-O usuário pode alterar esses valores e pressionar o botão \textit{Aplicar}. A aplicação realiza a conversão dos valores informados para o tipo \texttt{double} e cria uma nova instância de \texttt{JanelaMundo} com os limites fornecidos.
+O usuário pode alterar esses valores e pressionar o botão \textit{Aplicar}. A aplicação realiza a conversão dos valores informados para o tipo \texttt{double} e cria uma nova instância de \texttt{JanelaMundo} com os limites fornecidos. A nova janela passa a ser utilizada a partir da próxima interação (clique ou consulta).
 
-A classe \texttt{JanelaMundo} verifica se os valores fornecidos formam uma janela válida, exigindo que o valor mínimo seja menor que o valor máximo em ambos os eixos. Caso sejam informados valores não numéricos ou limites inválidos, a aplicação apresenta uma mensagem de erro ao usuário.
+A classe \texttt{JanelaMundo} verifica se os valores fornecidos formam uma janela válida, exigindo que o valor mínimo seja menor que o valor máximo em ambos os eixos. Caso sejam informados valores não numéricos ou limites inválidos, a aplicação apresenta uma mensagem de erro ao usuário e mantém a janela anterior.
 
 \subsection{Fluxo geral da solução}
-De forma resumida, o funcionamento da solução pode ser representado pelo seguinte fluxo:
+De forma resumida, o funcionamento da solução pode ser representado por dois fluxos. O primeiro corresponde ao clique do mouse:
 \[
     \text{Mouse} \Rightarrow \text{INP} \Rightarrow \text{NDC} \Rightarrow \text{USER} \Rightarrow \text{NDC} \Rightarrow \text{DC} \Rightarrow \text{Pixel}
 \]
-O mouse fornece a coordenada inicial utilizada pelo nosso programa, as funções da classe \texttt{Transformacao} realizam as conversões, a janela de mundo fornece os limites para a transformação, e o \texttt{Display} utiliza a coordenada final para ativar diretamente o pixel correspondente.
+O mouse fornece a coordenada inicial utilizada pelo nosso programa, as funções da classe \texttt{Transformacao} realizam as conversões, a janela de mundo fornece os limites para a transformação, e o \texttt{Display} utiliza a coordenada final para ativar diretamente o pixel correspondente. O percurso completo, de ida ao mundo e volta ao dispositivo, garante que o pixel ativado seja o resultado das transformações no sistema NDC selecionado, e não simplesmente a posição bruta do clique.
+
+O segundo fluxo corresponde à consulta de um ponto do mundo:
+\[
+    \text{USER} \Rightarrow \text{NDC} \Rightarrow \text{DC} \Rightarrow \text{Pixel}
+\]
+Em ambos os fluxos, a etapa NDC utiliza o sistema escolhido no seletor (Subseção~\ref{subsec:selecao-ndc}).
 
 A aplicação apresenta as coordenadas intermediárias na interface, permitindo acompanhar visualmente o resultado das transformações realizadas.

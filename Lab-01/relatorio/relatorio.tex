@@ -6,6 +6,11 @@
 \usepackage{float}
 \usepackage{paineis_tikz}
 
+% Pastas onde as imagens são procuradas (as figuras usam só o nome do arquivo).
+% Inclui variantes com "relatorio/" para quando o projeto do Overleaf é criado
+% a partir de um .zip que mantém essa pasta na raiz.
+\graphicspath{{imagens/}{imagens/resultados/}{relatorio/imagens/}{relatorio/imagens/resultados/}{./}{resultados/}}
+
 % Referência à Aula2 (Prof. Robson Pequeno de Sousa) com nota de rodapé
 % \aula: primeira menção, com a nota completa; \aularef: menções seguintes, que remetem a essa nota.
 \newcommand{\aula}{Aula~2\footnote{\label{fn:aula}SOUSA, Robson Pequeno de. \textit{Sistemas de coordenadas}: Aula2. Material da disciplina de Computação Gráfica. As referências bibliográficas constam ao final do material do professor. Ver também \cite{aula2}.}}
@@ -22,7 +27,7 @@
 \setlength{\footnotesep}{11pt}
 
 % --- CAPA ---
-\logomarca{imagens/marca-uepb.png}
+\logomarca{marca-uepb.png}
 \universidade{UNIVERSIDADE ESTADUAL DA PARAÍBA - UEPB}
 \centro{CENTRO DE CIÊNCIAS E TECNOLOGIA - CCT}
 \departamento{DEPARTAMENTO DE COMPUTAÇÃO}

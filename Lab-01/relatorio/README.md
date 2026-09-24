@@ -20,7 +20,8 @@ relatorio/
 │   ├── 07-conclusao.tex
 │   └── 08-referencias.tex
 └── imagens/
-    └── marca-uepb.png           # <-- adicione a logomarca da UEPB aqui (não está no repo)
+    ├── marca-uepb.png           # logomarca da UEPB usada na capa
+    └── resultados/              # capturas de tela da seção de Resultados
 ```
 
 Cada integrante pode editar sua seção dentro de `secoes/` sem mexer no
@@ -28,10 +29,9 @@ Cada integrante pode editar sua seção dentro de `secoes/` sem mexer no
 
 ## Antes de compilar
 
-Coloque o arquivo da logomarca da UEPB em `imagens/marca-uepb.png`
-(o PNG não foi incluído no repositório). Sem esse arquivo, a compilação
-falha ao gerar a capa.
-
+A capa usa a logomarca em `imagens/marca-uepb.png`. Sem esse arquivo, a
+compilação falha ao gerar a capa. Ele deve ser o PNG em si, e não um
+*symlink* para um caminho local.
 ## Como compilar
 
 Requer uma distribuição LaTeX com o pacote de idioma português do
