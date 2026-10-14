@@ -25,4 +25,9 @@ Transformação entre sistemas de coordenadas:
 
 ### Projeto 02
 
-A definir.
+Conversão matricial de circunferências com entrada em coordenadas de dispositivo e plotagem pixel a pixel:
+
+- Método trigonométrico com simetria de ordem 8
+- Método do ponto médio com atualização incremental da variável de decisão
+- Entrada do centro e raio por campos ou por cliques; eixos de referência cruzam o centro visual do display
+- Exibição dos pixels plotados e do passo a passo das variáveis

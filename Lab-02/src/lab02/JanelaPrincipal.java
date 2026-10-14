@@ -1,0 +1,618 @@
+package lab02;
+
+import java.awt.BorderLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
+import java.awt.event.MouseEvent;
+
+import javax.swing.BorderFactory;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
+import javax.swing.event.MouseInputAdapter;
+
+import javax.swing.JButton;
+import javax.swing.JOptionPane;
+import javax.swing.JTextField;
+
+/**
+ * Janela principal
+ *
+ * - apresenta o display;
+ * - recebe o clique do mouse (liga o pixel ativo);
+ * - permite escolher o sistema de coordenadas NDC utilizado;
+ * - permite consultar um ponto do mundo diretamente no display;
+ * - executa as transformações;
+ * - apresenta as coordenadas calculadas.
+ */
+public class JanelaPrincipal extends JFrame {
+
+    /**
+     * Resolução do display utilizada pelo laboratório.
+     */
+    private static final int LARGURA_DISPLAY = 800;
+    private static final int ALTURA_DISPLAY = 600;
+
+    /**
+     * lab02.Display gráfico onde o pixel será ativado.
+     */
+    private final Display display;
+
+    /**
+     * Janela atual do mundo.
+     */
+    private JanelaMundo janelaMundo;
+
+    /**
+     * Sistema de coordenadas normalizadas (NDC) atualmente
+     * selecionado pelo usuário. Parametriza qual par de
+     * transformações (ZERO_A_UM ou MENOS_UM_A_UM) é utilizado
+     * no pipeline mundo -> ndc -> dispositivo.
+     */
+    private TipoNDC ndcAtual = TipoNDC.ZERO_A_UM;
+
+    /**
+     * Labels utilizados para apresentar as coordenadas.
+     */
+    private final JLabel lblDispositivo;
+    private final JLabel lblNdc01;
+    private final JLabel lblNdc11;
+    private final JLabel lblMundo;
+    private final JTextField campoXMin;
+    private final JTextField campoXMax;
+    private final JTextField campoYMin;
+    private final JTextField campoYMax;
+
+    /**
+     * Seletor do sistema NDC utilizado.
+     */
+    private final JComboBox<TipoNDC> comboNdc;
+
+    /**
+     * Campos para consulta de um ponto do mundo.
+     */
+    private final JTextField campoMundoX;
+    private final JTextField campoMundoY;
+
+    /**
+     * Construtor da janela principal.
+     */
+    public JanelaPrincipal() {
+
+        janelaMundo = new JanelaMundo(
+                -100,
+                100,
+                -100,
+                100
+        );
+
+        /*
+         * Criação do display.
+         */
+        display = new Display(
+                LARGURA_DISPLAY,
+                ALTURA_DISPLAY
+        );
+
+        /*
+         * Labels das informações.
+         */
+        lblDispositivo =
+                new JLabel("Dispositivo: -");
+
+        lblNdc01 =
+                new JLabel("NDC [0,1]: -");
+
+        lblNdc11 =
+                new JLabel("NDC [-1,1]: -");
+
+        lblMundo =
+                new JLabel("Mundo: -");
+
+        campoXMin = new JTextField("-100");
+        campoXMax = new JTextField("100");
+        campoYMin = new JTextField("-100");
+        campoYMax = new JTextField("100");
+
+        comboNdc = new JComboBox<>(TipoNDC.values());
+
+        campoMundoX = new JTextField("0");
+        campoMundoY = new JTextField("0");
+
+        configurarJanela();
+        configurarMouse();
+    }
+
+    /**
+     * Configura as propriedades básicas da janela.
+     */
+    private void configurarJanela() {
+
+        setTitle(
+                "Laboratório de Computação Gráfica"
+        );
+
+        setDefaultCloseOperation(
+                JFrame.EXIT_ON_CLOSE
+        );
+
+        setLayout(
+                new BorderLayout()
+        );
+
+        JTabbedPane abas = new JTabbedPane();
+        abas.addTab("Lab 01 — Transformações", criarAbaLab01());
+        abas.addTab("Lab 02 — Primitivas", new PainelPrimitivas(
+                LARGURA_DISPLAY, ALTURA_DISPLAY));
+        add(abas, BorderLayout.CENTER);
+
+        /*
+         * Ajusta o tamanho da janela de acordo
+         * com seus componentes.
+         */
+        pack();
+
+        /*
+         * Centraliza a janela na tela.
+         */
+        setLocationRelativeTo(null);
+
+        /*
+         * Evita que o usuário altere o tamanho do display.
+         */
+        setResizable(false);
+    }
+
+    /** Mantém a tela do Lab-01 disponível como referência. */
+    private JPanel criarAbaLab01() {
+        JPanel aba = new JPanel(new BorderLayout());
+        aba.add(display, BorderLayout.CENTER);
+        aba.add(criarPainelInformacoes(), BorderLayout.SOUTH);
+        aba.add(criarPainelLateral(), BorderLayout.EAST);
+        return aba;
+    }
+
+    /**
+     * Cria o painel responsável pela apresentação
+     * das coordenadas.
+     *
+     * @return painel de informações
+     */
+    private JPanel criarPainelInformacoes() {
+
+        JPanel painel = new JPanel();
+
+        painel.setBorder(
+                BorderFactory.createEmptyBorder(
+                        10,
+                        10,
+                        10,
+                        10
+                )
+        );
+
+        painel.setLayout(
+                new GridLayout(4, 1)
+        );
+
+        Font fonte =
+                new Font(
+                        "Monospaced",
+                        Font.PLAIN,
+                        14
+                );
+
+        lblDispositivo.setFont(fonte);
+        lblNdc01.setFont(fonte);
+        lblNdc11.setFont(fonte);
+        lblMundo.setFont(fonte);
+
+        painel.add(lblDispositivo);
+        painel.add(lblNdc01);
+        painel.add(lblNdc11);
+        painel.add(lblMundo);
+
+        return painel;
+    }
+
+    /**
+     * Agrupa, em uma única coluna à direita, o painel da
+     * janela do mundo, o seletor de sistema NDC e o painel
+     * de consulta de ponto do mundo.
+     *
+     * @return painel lateral completo
+     */
+    private JPanel criarPainelLateral() {
+
+        JPanel painel = new JPanel();
+
+        painel.setLayout(
+                new GridLayout(3, 1, 5, 5)
+        );
+
+        painel.add(criarPainelJanelaMundo());
+        painel.add(criarPainelNdc());
+        painel.add(criarPainelConsultaMundo());
+
+        return painel;
+    }
+
+    private JPanel criarPainelJanelaMundo() {
+
+        JPanel painel = new JPanel();
+
+        painel.setBorder(
+                BorderFactory.createTitledBorder(
+                        "Janela do Mundo"
+                )
+        );
+
+        painel.setLayout(
+                new GridLayout(5, 2, 5, 2)
+        );
+
+        painel.add(new JLabel("X mínimo:"));
+        painel.add(campoXMin);
+
+        painel.add(new JLabel("X máximo:"));
+        painel.add(campoXMax);
+
+        painel.add(new JLabel("Y mínimo:"));
+        painel.add(campoYMin);
+
+        painel.add(new JLabel("Y máximo:"));
+        painel.add(campoYMax);
+
+        JButton botaoAplicar =
+                new JButton("Aplicar");
+
+        botaoAplicar.addActionListener(
+                e -> atualizarJanelaMundo()
+        );
+
+        painel.add(botaoAplicar);
+
+        return painel;
+    }
+
+    /**
+     * Cria o painel responsável por selecionar o sistema
+     * de coordenadas normalizadas do dispositivo (NDC)
+     * utilizado no pipeline de transformação.
+     *
+     * @return painel do seletor de NDC
+     */
+    private JPanel criarPainelNdc() {
+
+        JPanel painel = new JPanel();
+
+        painel.setBorder(
+                BorderFactory.createTitledBorder(
+                        "Sistema NDC"
+                )
+        );
+
+        painel.setLayout(
+                new GridLayout(2, 1, 5, 5)
+        );
+
+        painel.add(new JLabel("Intervalo utilizado:"));
+        painel.add(comboNdc);
+
+        /*
+         * Sempre que o usuário troca o sistema NDC, apenas
+         * o intervalo utilizado pelo pipeline é atualizado.
+         * Não disparamos nenhuma nova consulta aqui: os
+         * campos de "Consultar lab02.Ponto do Mundo" podem estar
+         * com um valor antigo (ou o padrão "0,0"), e usá-los
+         * automaticamente faria o pixel pular para um ponto
+         * que o usuário não pediu. A próxima interação
+         * (mouse ou botão "Mostrar no display") já vai usar
+         * o novo sistema.
+         */
+        comboNdc.addActionListener(
+                e -> ndcAtual = (TipoNDC) comboNdc.getSelectedItem()
+        );
+
+        return painel;
+    }
+
+    /**
+     * Cria o painel responsável por consultar, no display,
+     * o pixel correspondente a um ponto do mundo digitado
+     * pelo usuário.
+     *
+     * @return painel de consulta de ponto do mundo
+     */
+    private JPanel criarPainelConsultaMundo() {
+
+        JPanel painel = new JPanel();
+
+        painel.setBorder(
+                BorderFactory.createTitledBorder(
+                        "Consultar lab02.Ponto do Mundo"
+                )
+        );
+
+        painel.setLayout(
+                new GridLayout(3, 2, 5, 2)
+        );
+
+        painel.add(new JLabel("X do mundo:"));
+        painel.add(campoMundoX);
+
+        painel.add(new JLabel("Y do mundo:"));
+        painel.add(campoMundoY);
+
+        JButton botaoConsultar =
+                new JButton("Mostrar no display");
+
+        botaoConsultar.addActionListener(
+                e -> consultarPontoMundo()
+        );
+
+        painel.add(botaoConsultar);
+
+        return painel;
+    }
+
+    private void atualizarJanelaMundo() {
+
+        try {
+
+            double xMin =
+                    Double.parseDouble(
+                            campoXMin.getText()
+                    );
+
+            double xMax =
+                    Double.parseDouble(
+                            campoXMax.getText()
+                    );
+
+            double yMin =
+                    Double.parseDouble(
+                            campoYMin.getText()
+                    );
+
+            double yMax =
+                    Double.parseDouble(
+                            campoYMax.getText()
+                    );
+
+            janelaMundo =
+                    new JanelaMundo(
+                            xMin,
+                            xMax,
+                            yMin,
+                            yMax
+                    );
+
+        } catch (NumberFormatException erro) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Digite apenas valores numéricos.",
+                    "Erro",
+                    JOptionPane.ERROR_MESSAGE
+            );
+
+        } catch (IllegalArgumentException erro) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    erro.getMessage(),
+                    "Erro",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    /**
+     * Lê o ponto do mundo digitado pelo usuário, converte
+     * para coordenadas de dispositivo (usando o sistema NDC
+     * atualmente selecionado) e ativa o pixel correspondente
+     * no display.
+     */
+    private void consultarPontoMundo() {
+
+        try {
+
+            double x =
+                    Double.parseDouble(
+                            campoMundoX.getText()
+                    );
+
+            double y =
+                    Double.parseDouble(
+                            campoMundoY.getText()
+                    );
+
+            Ponto mundo = new Ponto(x, y);
+
+            Ponto dispositivo = mundoParaDispositivo(mundo);
+
+            int pixelX = (int) Math.round(dispositivo.getX());
+            int pixelY = (int) Math.round(dispositivo.getY());
+
+            display.drawPixel(pixelX, pixelY);
+
+            atualizarLabels(pixelX, pixelY, mundo);
+
+        } catch (NumberFormatException erro) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Digite apenas valores numéricos para o ponto do mundo.",
+                    "Erro",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    /**
+     * Configura o listener responsável por capturar o
+     * clique do mouse sobre o display e ligar o pixel
+     * correspondente.
+     */
+    private void configurarMouse() {
+
+        display.addMouseListener(
+                new MouseInputAdapter() {
+
+                    /**
+                     * Executado quando o usuário clica
+                     * dentro do display.
+                     *
+                     * @param evento informações do clique do mouse
+                     */
+                    @Override
+                    public void mouseClicked(
+                            MouseEvent evento) {
+
+                        ativarPixelPorClique(
+                                evento.getX(),
+                                evento.getY()
+                        );
+                    }
+                }
+        );
+    }
+
+    /**
+     * Trata o clique do mouse no display: converte a
+     * coordenada de dispositivo clicada para o mundo e,
+     * em seguida, de volta para dispositivo usando o
+     * sistema NDC selecionado, mantendo o pixel ativo
+     * coerente com o intervalo NDC escolhido pelo usuário.
+     *
+     * @param x coordenada X do clique no display
+     * @param y coordenada Y do clique no display
+     */
+    private void ativarPixelPorClique(int x, int y) {
+
+        Ponto input = new Ponto(x, y);
+
+        Ponto ndc01 =
+                Transformacao.inpToNdc01(
+                        input,
+                        LARGURA_DISPLAY,
+                        ALTURA_DISPLAY
+                );
+
+        Ponto ndc11 =
+                Transformacao.inpToNdc11(
+                        input,
+                        LARGURA_DISPLAY,
+                        ALTURA_DISPLAY
+                );
+
+        Ponto mundo =
+                (ndcAtual == TipoNDC.ZERO_A_UM)
+                        ? Transformacao.ndc01ToUser(ndc01, janelaMundo)
+                        : Transformacao.ndc11ToUser(ndc11, janelaMundo);
+
+        Ponto dispositivoFinal = mundoParaDispositivo(mundo);
+
+        int pixelX = (int) Math.round(dispositivoFinal.getX());
+        int pixelY = (int) Math.round(dispositivoFinal.getY());
+
+        display.drawPixel(pixelX, pixelY);
+
+        atualizarLabels(x, y, mundo, ndc01, ndc11);
+    }
+
+    /**
+     * Converte um ponto do mundo para coordenadas de
+     * dispositivo, respeitando o sistema NDC atualmente
+     * selecionado pelo usuário.
+     *
+     * @param mundo ponto em coordenadas do mundo
+     * @return ponto em coordenadas de dispositivo
+     */
+    private Ponto mundoParaDispositivo(Ponto mundo) {
+
+        if (ndcAtual == TipoNDC.ZERO_A_UM) {
+
+            Ponto ndc =
+                    Transformacao.userToNdc01(mundo, janelaMundo);
+
+            return Transformacao.ndc01ToDc(
+                    ndc,
+                    LARGURA_DISPLAY,
+                    ALTURA_DISPLAY
+            );
+        }
+
+        Ponto ndc =
+                Transformacao.userToNdc11(mundo, janelaMundo);
+
+        return Transformacao.ndc11ToDc(
+                ndc,
+                LARGURA_DISPLAY,
+                ALTURA_DISPLAY
+        );
+    }
+
+    /**
+     * Atualiza os labels a partir de um ponto do mundo
+     * digitado (recalcula os dois sistemas NDC para fins
+     * de exibição).
+     */
+    private void atualizarLabels(int pixelX, int pixelY, Ponto mundo) {
+
+        Ponto ndc01 =
+                Transformacao.userToNdc01(mundo, janelaMundo);
+
+        Ponto ndc11 =
+                Transformacao.userToNdc11(mundo, janelaMundo);
+
+        atualizarLabels(pixelX, pixelY, mundo, ndc01, ndc11);
+    }
+
+    /**
+     * Atualiza todos os labels de coordenadas exibidos
+     * na parte inferior da janela.
+     */
+    private void atualizarLabels(
+            int pixelX,
+            int pixelY,
+            Ponto mundo,
+            Ponto ndc01,
+            Ponto ndc11) {
+
+        lblDispositivo.setText(
+                String.format(
+                        "Dispositivo: (%d, %d)",
+                        pixelX,
+                        pixelY
+                )
+        );
+
+        lblNdc01.setText(
+                String.format(
+                        "NDC [0,1]: (%.3f, %.3f)",
+                        ndc01.getX(),
+                        ndc01.getY()
+                )
+        );
+
+        lblNdc11.setText(
+                String.format(
+                        "NDC [-1,1]: (%.3f, %.3f)",
+                        ndc11.getX(),
+                        ndc11.getY()
+                )
+        );
+
+        lblMundo.setText(
+                String.format(
+                        "Mundo: (%.2f, %.2f)",
+                        mundo.getX(),
+                        mundo.getY()
+                )
+        );
+    }
+}

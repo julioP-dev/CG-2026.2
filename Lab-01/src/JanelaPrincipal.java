@@ -1,3 +1,9 @@
+import lab02.Display;
+import lab02.JanelaMundo;
+import lab02.Ponto;
+import lab02.TipoNDC;
+import lab02.Transformacao;
+
 import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
@@ -33,7 +39,7 @@ public class JanelaPrincipal extends JFrame {
     private static final int ALTURA_DISPLAY = 600;
 
     /**
-     * Display gráfico onde o pixel será ativado.
+     * lab02.Display gráfico onde o pixel será ativado.
      */
     private final Display display;
 
@@ -308,7 +314,7 @@ public class JanelaPrincipal extends JFrame {
          * Sempre que o usuário troca o sistema NDC, apenas
          * o intervalo utilizado pelo pipeline é atualizado.
          * Não disparamos nenhuma nova consulta aqui: os
-         * campos de "Consultar Ponto do Mundo" podem estar
+         * campos de "Consultar lab02.Ponto do Mundo" podem estar
          * com um valor antigo (ou o padrão "0,0"), e usá-los
          * automaticamente faria o pixel pular para um ponto
          * que o usuário não pediu. A próxima interação
@@ -335,7 +341,7 @@ public class JanelaPrincipal extends JFrame {
 
         painel.setBorder(
                 BorderFactory.createTitledBorder(
-                        "Consultar Ponto do Mundo"
+                        "Consultar lab02.Ponto do Mundo"
                 )
         );
 

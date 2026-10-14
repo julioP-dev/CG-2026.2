@@ -1,3 +1,6 @@
+import lab02.JanelaMundo;
+import lab02.Ponto;
+
 /**
  * Contém as transformações entre os diferentes sistemas
  * de coordenadas utilizados no laboratório.

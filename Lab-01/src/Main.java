@@ -1,3 +1,5 @@
+import lab02.JanelaPrincipal;
+
 import javax.swing.SwingUtilities;
 
 public class Main {
