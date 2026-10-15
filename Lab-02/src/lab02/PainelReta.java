@@ -33,7 +33,8 @@ public class PainelReta extends JPanel {
     private final JButton botaoExecutar = new JButton("Executar algoritmo");
     private final JComboBox<AlgoritmoReta> comboAlgoritmo = new JComboBox<>(
             new AlgoritmoReta[]{
-                    new AlgoritmoRetaDDA()
+                new AlgoritmoRetaDDA(),
+                new AlgoritmoRetaPontoMedio()
             });
     private Ponto p1DefinidoPorClique;
     private Timer temporizador;
