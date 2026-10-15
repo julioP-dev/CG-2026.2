@@ -31,6 +31,7 @@ public class PainelPrimitivas extends JPanel {
     private final JComboBox<AlgoritmoCircunferencia> comboAlgoritmo = new JComboBox<>(
             new AlgoritmoCircunferencia[]{
                     new AlgoritmoCircunferenciaTrigonometrico(),
+                    new AlgoritmoCircunferenciaPolinomial(),
                     new AlgoritmoCircunferenciaPontoMedio()
             });
     private Ponto centroDefinidoPorClique;
