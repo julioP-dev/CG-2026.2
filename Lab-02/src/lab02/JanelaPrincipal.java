@@ -146,6 +146,8 @@ public class JanelaPrincipal extends JFrame {
         abas.addTab("Lab 01 — Transformações", criarAbaLab01());
         abas.addTab("Lab 02 — Primitivas", new PainelPrimitivas(
                 LARGURA_DISPLAY, ALTURA_DISPLAY));
+        abas.addTab("Lab 02 — Reta", new PainelReta(
+                LARGURA_DISPLAY, ALTURA_DISPLAY));
         add(abas, BorderLayout.CENTER);
 
         /*
