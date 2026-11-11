@@ -49,7 +49,7 @@ public class JanelaPrincipal extends JFrame {
         abas.addTab("Lab 02 — Reta", new PainelReta(LARGURA_DISPLAY, ALTURA_DISPLAY));
 
         // 3. Adiciona a aba do Lab 03
-        MotorTransformacoes motor = new MotorProvisorio();
+        MotorTransformacoes motor = new MotorComposicao();
         abas.addTab("Lab 03 — Transformações 2D", new PainelTransformacoes(LARGURA_DISPLAY, ALTURA_DISPLAY, motor));
 
         add(abas, BorderLayout.CENTER);

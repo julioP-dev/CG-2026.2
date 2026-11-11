@@ -11,6 +11,17 @@ import java.util.List;
 public interface MotorTransformacoes {
 
     /**
+     * Permite à interface listar apenas as operações disponíveis no motor.
+     * Implementações existentes continuam aceitando todos os tipos por padrão.
+     *
+     * @param tipo tipo de transformação a consultar
+     * @return true quando o motor dispõe da matriz desse tipo
+     */
+    default boolean suporta(Operacao.Tipo tipo) {
+        return true;
+    }
+
+    /**
      * Aplica as operações ao polígono, na ordem da lista (a primeira é aplicada primeiro).
      * Coordenadas do mundo: origem no centro, x para a direita, y para cima.
      * Deve devolver um novo Poligono, sem alterar o original.

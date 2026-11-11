@@ -10,7 +10,9 @@ import java.text.DecimalFormat;
  *   <li>ESCALA: a = Sx, b = Sy, em relação à origem;</li>
  *   <li>ROTACAO: a = ângulo em graus, anti-horário, em torno da origem (b não é usado);</li>
  *   <li>REFLEXAO_X: (x, y) → (x, −y); REFLEXAO_Y: (x, y) → (−x, y);
- *       REFLEXAO_ORIGEM: (x, y) → (−x, −y) (a e b não são usados);</li>
+ *       REFLEXAO_ORIGEM: (x, y) → (−x, −y); REFLEXAO_Y_IGUAL_X: (x, y) → (y, x)
+ *       (a e b não são usados);</li>
+ *   <li>CISALHAMENTO_X e CISALHAMENTO_Y: a = fator no eixo escolhido; b não usado;</li>
  *   <li>CISALHAMENTO: a = Shx, b = Shy, com x' = x + Shx·y e y' = y + Shy·x.</li>
  * </ul>
  */
@@ -23,6 +25,10 @@ public record Operacao(Tipo tipo, double a, double b) {
         REFLEXAO_X("Reflexão no eixo X"),
         REFLEXAO_Y("Reflexão no eixo Y"),
         REFLEXAO_ORIGEM("Reflexão na origem"),
+        REFLEXAO_Y_IGUAL_X("Reflexão na reta y = x"),
+        CISALHAMENTO_X("Cisalhamento em X"),
+        CISALHAMENTO_Y("Cisalhamento em Y"),
+        /** Tipo legado: transformação simultânea, diferente da composição X seguida de Y. */
         CISALHAMENTO("Cisalhamento");
 
         private final String nome;
@@ -38,6 +44,8 @@ public record Operacao(Tipo tipo, double a, double b) {
             case TRANSLACAO -> "Translação (Δx=" + numero(a) + "; Δy=" + numero(b) + ")";
             case ESCALA -> "Escala (Sx=" + numero(a) + "; Sy=" + numero(b) + ")";
             case ROTACAO -> "Rotação (" + numero(a) + "°, anti-horário)";
+            case CISALHAMENTO_X -> "Cisalhamento em X (Shx=" + numero(a) + ")";
+            case CISALHAMENTO_Y -> "Cisalhamento em Y (Shy=" + numero(a) + ")";
             case CISALHAMENTO -> "Cisalhamento (Shx=" + numero(a) + "; Shy=" + numero(b) + ")";
             default -> tipo.toString();
         };

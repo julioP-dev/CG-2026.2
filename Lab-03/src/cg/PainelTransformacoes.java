@@ -41,7 +41,7 @@ public class PainelTransformacoes extends JPanel {
 
     private final JComboBox<Forma> comboForma = new JComboBox<>(Forma.values());
     private final JLabel instrucaoClique = new JLabel(INSTRUCAO_CLIQUE);
-    private final JComboBox<Operacao.Tipo> comboTipo = new JComboBox<>(Operacao.Tipo.values());
+    private final JComboBox<Operacao.Tipo> comboTipo = new JComboBox<>();
     private final JLabel rotuloA = new JLabel();
     private final JLabel rotuloB = new JLabel();
     private final JTextField campoA = new JTextField(6);
@@ -54,8 +54,10 @@ public class PainelTransformacoes extends JPanel {
 
     private enum Forma {
 
-        TRIANGULO("Triângulo", 50, 40, 200, 60, 90, 170),
-        QUADRADO("Quadrado", 50, 50, 150, 50, 150, 150, 50, 150);
+        QUADRADO("Quadrado", -75, -75, 75, -75, 75, 75, -75, 75),
+        // Forma em L de área 15000 e centroide (0, 0), assimétrica nas reflexões.
+        IRREGULAR("Irregular côncavo", -75, -50, 125, -50, 125, 0,
+                -25, 0, -25, 100, -75, 100);
 
         private final String nome;
         private final double[] coordenadas;
@@ -79,6 +81,13 @@ public class PainelTransformacoes extends JPanel {
     public PainelTransformacoes(int largura, int altura, MotorTransformacoes motor) {
         super(new BorderLayout(8, 8));
         this.motor = motor;
+        for (Operacao.Tipo tipo : Operacao.Tipo.values()) {
+            // O tipo simultâneo é mantido na API por compatibilidade.
+            // Na tela, os dois cisalhamentos são adicionados separadamente.
+            if (tipo != Operacao.Tipo.CISALHAMENTO && motor.suporta(tipo)) {
+                comboTipo.addItem(tipo);
+            }
+        }
         display = new DisplayTransformacoes(largura, altura);
         add(display, BorderLayout.CENTER);
         add(criarPainelLateral(), BorderLayout.EAST);
@@ -219,6 +228,8 @@ public class PainelTransformacoes extends JPanel {
             case TRANSLACAO -> configurarCampos("Δx:", "0", "Δy:", "0");
             case ESCALA -> configurarCampos("Sx:", "1", "Sy:", "1");
             case ROTACAO -> configurarCampos("Ângulo (°):", "0", null, null);
+            case CISALHAMENTO_X -> configurarCampos("Shx:", "0", null, null);
+            case CISALHAMENTO_Y -> configurarCampos("Shy:", "0", null, null);
             case CISALHAMENTO -> configurarCampos("Shx:", "0", "Shy:", "0");
             default -> configurarCampos(null, null, null, null);
         }
@@ -299,8 +310,8 @@ public class PainelTransformacoes extends JPanel {
      */
     private void aplicar() {
         try {
-            if (vertices.size() < 2) {
-                throw new IllegalArgumentException("Defina um polígono com ao menos 2 vértices.");
+            if (vertices.size() < 3) {
+                throw new IllegalArgumentException("Defina um polígono com ao menos 3 vértices.");
             }
             if (operacoes.isEmpty()) {
                 throw new IllegalArgumentException("Adicione ao menos uma transformação à composição.");
