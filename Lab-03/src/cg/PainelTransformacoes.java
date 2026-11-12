@@ -161,7 +161,6 @@ public class PainelTransformacoes extends JPanel {
 
     private JPanel criarPainelLateral() {
         JPanel lateral = new JPanel(new BorderLayout(6, 10));
-        lateral.setPreferredSize(new Dimension(360, 600));
         lateral.setBorder(BorderFactory.createEmptyBorder(8, 4, 8, 8));
 
         JPanel controles = new JPanel();
@@ -187,7 +186,10 @@ public class PainelTransformacoes extends JPanel {
         historico.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
         historico.setText(TEXTO_INICIAL);
         painelHistorico.add(new JScrollPane(historico), BorderLayout.CENTER);
+        painelHistorico.setPreferredSize(new Dimension(360, 150));
         lateral.add(painelHistorico, BorderLayout.CENTER);
+        // Largura fixa; altura suficiente para as abas e o passo a passo (no mínimo a do display).
+        lateral.setPreferredSize(new Dimension(360, Math.max(600, lateral.getPreferredSize().height)));
         return lateral;
     }
 
