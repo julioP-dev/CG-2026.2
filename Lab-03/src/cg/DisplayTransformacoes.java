@@ -6,7 +6,9 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.JPanel;
 
@@ -70,11 +72,36 @@ public final class DisplayTransformacoes extends JPanel implements Tela {
 
     /** Rasteriza o polígono (em coordenadas do mundo) com o algoritmo do ponto médio. */
     public void desenhar(Poligono mundo, Color cor) {
+        Rasterizador.drawPolygon(this, paraDispositivo(mundo), cor);
+        repaint();
+    }
+
+    /** Mesmo polígono em coordenadas do dispositivo: origem no centro da imagem e y para baixo. */
+    private Poligono paraDispositivo(Poligono mundo) {
         List<Ponto> vertices = new ArrayList<>();
         for (Ponto p : mundo.vertices) {
             vertices.add(new Ponto(largura / 2 + p.x(), altura / 2 - p.y()));
         }
-        Rasterizador.drawPolygon(this, new Poligono(vertices), cor);
+        return new Poligono(vertices);
+    }
+
+    /** Pixels que o ponto médio acende no contorno do polígono, em coordenadas do mundo (x, y), sem repetir. */
+    public List<int[]> pixelsDoContorno(Poligono mundo) {
+        List<int[]> pixels = new ArrayList<>();
+        Set<String> vistos = new HashSet<>();
+        // Uma "tela" que só anota os pixels, em vez de pintar.
+        Tela anotar = (x, y, cor) -> {
+            if (vistos.add(x + "," + y)) pixels.add(new int[] {x - largura / 2, altura / 2 - y});
+        };
+        Rasterizador.drawPolygon(anotar, paraDispositivo(mundo), COR_RESULTADO);
+        return pixels;
+    }
+
+    /** Acende os pixels dados em coordenadas do mundo (x, y). */
+    public void desenharPixels(List<int[]> pixelsDoMundo, Color cor) {
+        for (int[] p : pixelsDoMundo) {
+            setPixel(largura / 2 + p[0], altura / 2 - p[1], cor);
+        }
         repaint();
     }
 

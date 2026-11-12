@@ -68,6 +68,9 @@ public class PainelTransformacoes extends JPanel {
     private final JTextField viewUMax = new JTextField("390", 4);
     private final JTextField viewVMin = new JTextField("-290", 4);
     private final JTextField viewVMax = new JTextField("-50", 4);
+    /** Gato de Arnold: número de iterações e o quadrado N × N de pixels onde ele age. */
+    private final JTextField campoIteracoes = new JTextField("1", 4);
+    private final int ladoGato, xMinGato, yMinGato;
     private final DefaultListModel<String> modeloLista = new DefaultListModel<>();
     private final JList<String> listaOperacoes = new JList<>(modeloLista);
     private final JTextArea historico = new JTextArea();
@@ -128,6 +131,10 @@ public class PainelTransformacoes extends JPanel {
         xMaxMundo = largura / 2 - 1;
         yMinMundo = -altura / 2 + 1;
         yMaxMundo = altura / 2;
+        // O gato age num quadrado N × N centrado no display: x de −N/2 a N/2 − 1 e as linhas visíveis de y.
+        ladoGato = Math.min(largura, altura);
+        xMinGato = -ladoGato / 2;
+        yMinGato = yMinMundo;
         for (Operacao.Tipo tipo : Operacao.Tipo.values()) {
             // O tipo simultâneo é mantido na API por compatibilidade.
             // Na tela, os dois cisalhamentos são adicionados separadamente.
@@ -169,7 +176,7 @@ public class PainelTransformacoes extends JPanel {
         // Aba 1: polígono e composição. Aba 2: os demais tópicos da G5 (recorte, ...).
         JTabbedPane abas = new JTabbedPane();
         abas.addTab("Transformações", controles);
-        abas.addTab("G5: janela e recorte", criarAbaG5());
+        abas.addTab("Janela, recorte e gato", criarAbaG5());
         lateral.add(abas, BorderLayout.NORTH);
 
         JPanel painelHistorico = new JPanel(new BorderLayout());
@@ -551,6 +558,8 @@ public class PainelTransformacoes extends JPanel {
         coluna.add(criarGrupoRecorte());
         coluna.add(Box.createVerticalStrut(6));
         coluna.add(criarGrupoViewport());
+        coluna.add(Box.createVerticalStrut(6));
+        coluna.add(criarGrupoGato());
         // Em NORTH, os grupos ficam com a altura natural, no topo da aba.
         JPanel aba = new JPanel(new BorderLayout());
         aba.add(coluna, BorderLayout.NORTH);
@@ -592,6 +601,21 @@ public class PainelTransformacoes extends JPanel {
         JButton mapear = new JButton("Recortar e levar para a viewport");
         mapear.addActionListener(e -> mapearParaViewport());
         grupo.add(mapear, BorderLayout.SOUTH);
+        return grupo;
+    }
+
+    private JPanel criarGrupoGato() {
+        JPanel grupo = new JPanel(new BorderLayout(5, 6));
+        grupo.setBorder(BorderFactory.createTitledBorder("Gato de Arnold (slides 34–36)"));
+        JPanel linha = new JPanel(new GridLayout(2, 2, 5, 5));
+        linha.add(new JLabel("Iterações:"));
+        linha.add(campoIteracoes);
+        linha.add(new JLabel("Quadrado " + ladoGato + " × " + ladoGato + ":"));
+        linha.add(new JLabel("período " + GatoDeArnold.periodo(ladoGato)));
+        grupo.add(linha, BorderLayout.NORTH);
+        JButton aplicarGato = new JButton("Aplicar o gato de Arnold");
+        aplicarGato.addActionListener(e -> aplicarGatoDeArnold());
+        grupo.add(aplicarGato, BorderLayout.SOUTH);
         return grupo;
     }
 
@@ -724,6 +748,80 @@ public class PainelTransformacoes extends JPanel {
             JOptionPane.showMessageDialog(this, erro.getMessage(), "Entrada inválida",
                     JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    /**
+     * Botão "Aplicar o gato de Arnold": pega os pixels do contorno (ponto médio) e aplica Γ a cada um,
+     * o número de vezes pedido. Pixels fora do quadrado N × N são ignorados.
+     */
+    private void aplicarGatoDeArnold() {
+        try {
+            ValidadorPoligono.validar(vertices);
+            String aviso = levarPoligonoParaOrigem();
+            int iteracoes;
+            try {
+                iteracoes = Integer.parseInt(campoIteracoes.getText().trim());
+            } catch (NumberFormatException erro) {
+                throw new IllegalArgumentException("Iterações: digite um número inteiro.");
+            }
+            if (iteracoes < 1 || iteracoes > 10_000) {
+                throw new IllegalArgumentException("Iterações: use um inteiro de 1 a 10000.");
+            }
+            Poligono alvo = poligonoAlvo();
+
+            List<int[]> noQuadrado = new ArrayList<>();
+            List<int[]> contorno = display.pixelsDoContorno(alvo);
+            for (int[] p : contorno) {
+                boolean dentro = p[0] >= xMinGato && p[0] < xMinGato + ladoGato
+                        && p[1] >= yMinGato && p[1] < yMinGato + ladoGato;
+                if (dentro) noQuadrado.add(p);
+            }
+            List<int[]> atuais = noQuadrado;
+            for (int k = 0; k < iteracoes; k++) {
+                atuais = iterarGato(atuais);
+            }
+
+            redesenhar();
+            if (!operacoes.isEmpty()) display.desenhar(alvo, DisplayTransformacoes.COR_ETAPA);
+            display.desenharRetangulo(xMinGato, xMinGato + ladoGato - 1, yMinGato, yMinGato + ladoGato - 1,
+                    DisplayTransformacoes.COR_ETAPA);
+            display.desenharPixels(atuais, DisplayTransformacoes.COR_RESULTADO);
+
+            int periodo = GatoDeArnold.periodo(ladoGato);
+            StringBuilder texto = new StringBuilder("Gato de Arnold: Γ(i, j) = ((i + j) mod N, (i + 2j) mod N), N = "
+                    + ladoGato + ".\n" + aviso + descreverAlvo()
+                    + "Quadrado (em cinza): x de " + xMinGato + " a " + (xMinGato + ladoGato - 1)
+                    + ", y de " + yMinGato + " a " + (yMinGato + ladoGato - 1)
+                    + "; i = x − (" + xMinGato + "), j = y − (" + yMinGato + ").\n"
+                    + "Período para N = " + ladoGato + ": " + periodo
+                    + " (depois de " + periodo + " iterações a figura volta a ser a original).\n"
+                    + "Pixels do contorno: " + noQuadrado.size());
+            if (contorno.size() > noQuadrado.size()) {
+                texto.append(" (" + (contorno.size() - noQuadrado.size()) + " fora do quadrado, ignorados)");
+            }
+            texto.append(".\nIterações aplicadas: ").append(iteracoes).append(".\n");
+            if (!noQuadrado.isEmpty()) {
+                int[] antes = noQuadrado.get(0);
+                int[] depois = atuais.get(0);
+                texto.append("Exemplo: o pixel (" + antes[0] + "; " + antes[1] + ") foi para ("
+                        + depois[0] + "; " + depois[1] + ").\n");
+            }
+            historico.setText(texto.toString());
+            historico.setCaretPosition(0);
+        } catch (IllegalArgumentException erro) {
+            JOptionPane.showMessageDialog(this, erro.getMessage(), "Entrada inválida",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /** Uma aplicação de Γ a cada pixel: (x, y) do mundo vira (i, j) do quadrado, passa por Γ e volta. */
+    private List<int[]> iterarGato(List<int[]> pixels) {
+        List<int[]> novos = new ArrayList<>();
+        for (int[] p : pixels) {
+            int[] ij = GatoDeArnold.aplicar(p[0] - xMinGato, p[1] - yMinGato, ladoGato);
+            novos.add(new int[] {ij[0] + xMinGato, ij[1] + yMinGato});
+        }
+        return novos;
     }
 
     /** As três linhas da matriz, com três casas decimais. */
