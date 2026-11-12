@@ -224,6 +224,7 @@ public class PainelTransformacoes extends JPanel {
         JButton carregar = new JButton("Carregar");
         JButton novo = new JButton("Novo");
         JButton definir = new JButton("Definir");
+        definir.setToolTipText("Usa os vértices digitados; com mais de 4 vértices clicados, confirma o polígono da tela.");
         botoes.add(carregar);
         botoes.add(novo);
         botoes.add(definir);
@@ -376,6 +377,11 @@ public class PainelTransformacoes extends JPanel {
     /** Lê os vértices digitados, valida (mundo e polígono) e passa a usá-los como polígono atual. */
     private void definirVerticesDigitados() {
         try {
+            // Com mais de 4 vértices (clicados), os campos ficam vazios: "Definir" confirma o polígono da tela.
+            if (camposVazios() && vertices.size() > MAX_VERTICES_DIGITADOS) {
+                definirPoligonoDaTela();
+                return;
+            }
             String[] xs = new String[MAX_VERTICES_DIGITADOS];
             String[] ys = new String[MAX_VERTICES_DIGITADOS];
             for (int i = 0; i < MAX_VERTICES_DIGITADOS; i++) {
@@ -397,6 +403,24 @@ public class PainelTransformacoes extends JPanel {
             JOptionPane.showMessageDialog(this, erro.getMessage(), "Vértices inválidos",
                     JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    /** Nenhum dos campos x e y foi preenchido? */
+    private boolean camposVazios() {
+        for (int i = 0; i < MAX_VERTICES_DIGITADOS; i++) {
+            if (!camposX[i].getText().isBlank() || !camposY[i].getText().isBlank()) return false;
+        }
+        return true;
+    }
+
+    /** Confirma o polígono desenhado na tela: valida e leva para a origem. */
+    private void definirPoligonoDaTela() {
+        ValidadorPoligono.validar(vertices);
+        formaCarregada = false;
+        String aviso = levarPoligonoParaOrigem();
+        instrucaoClique.setText(vertices.size() + " vértices definidos"
+                + (aviso.isEmpty() ? "." : " e levados para a origem."));
+        historico.setText(aviso.isEmpty() ? "O polígono de " + vertices.size() + " vértices já estava na origem.\n" : aviso);
     }
 
     /**
