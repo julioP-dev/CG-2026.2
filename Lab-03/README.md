@@ -23,7 +23,8 @@ O original aparece em azul, as etapas em cinza e o resultado em vermelho.
 Os modelos são um quadrado regular e um polígono irregular côncavo. Ambos têm
 centroide na origem cartesiana. O modo de cliques permite criar outros modelos;
 nele, cabe ao usuário posicionar o polígono em torno da origem. A aplicação exige
-ao menos três vértices, mas não valida simplicidade ou área do polígono desenhado.
+ao menos três vértices e recusa polígonos com arestas cruzadas, vértices repetidos
+ou área zero (`ValidadorPoligono`); polígonos côncavos continuam permitidos.
 
 ## Responsabilidades e contratos
 

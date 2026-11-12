@@ -397,9 +397,7 @@ public class PainelTransformacoes extends JPanel {
      */
     private void aplicar() {
         try {
-            if (vertices.size() < 3) {
-                throw new IllegalArgumentException("Defina um polígono com ao menos 3 vértices.");
-            }
+            ValidadorPoligono.validar(vertices);
             if (operacoes.isEmpty()) {
                 throw new IllegalArgumentException("Adicione ao menos uma transformação à composição.");
             }
