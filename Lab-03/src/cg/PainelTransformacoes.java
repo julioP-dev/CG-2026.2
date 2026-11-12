@@ -312,6 +312,8 @@ public class PainelTransformacoes extends JPanel {
                 operacoes.addAll(expandirPontoFixo(comPontoFixo, a, b, ler(campoXf), ler(campoYf)));
             } else {
                 Operacao.Tipo tipo = (Operacao.Tipo) escolhido;
+                // Ângulo negativo ou maior que 360° vira o ângulo anti-horário equivalente (0 a 360).
+                if (tipo == Operacao.Tipo.ROTACAO) a = normalizarAngulo(a);
                 operacoes.add(new Operacao(tipo, a, b));
             }
             atualizarLista();
@@ -330,12 +332,19 @@ public class PainelTransformacoes extends JPanel {
     static List<Operacao> expandirPontoFixo(PontoFixo tipo, double a, double b, double xf, double yf) {
         Operacao transformacao = (tipo == PontoFixo.ESCALA)
                 ? new Operacao(Operacao.Tipo.ESCALA, a, b)
-                : new Operacao(Operacao.Tipo.ROTACAO, a, 0);
+                : new Operacao(Operacao.Tipo.ROTACAO, normalizarAngulo(a), 0);
         List<Operacao> passos = new ArrayList<>();
         passos.add(new Operacao(Operacao.Tipo.TRANSLACAO, -xf, -yf));
         passos.add(transformacao);
         passos.add(new Operacao(Operacao.Tipo.TRANSLACAO, xf, yf));
         return passos;
+    }
+
+    /** Leva qualquer ângulo para o intervalo [0, 360). Ex.: -45 vira 315 e 360 vira 0. */
+    static double normalizarAngulo(double graus) {
+        double resto = graus % 360;
+        if (resto < 0) resto += 360;
+        return resto == 0 ? 0 : resto; // evita -0
     }
 
     private static double ler(JTextField campo) {
