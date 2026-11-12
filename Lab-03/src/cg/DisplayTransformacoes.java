@@ -20,6 +20,8 @@ public final class DisplayTransformacoes extends JPanel implements Tela {
     public static final Color COR_ORIGINAL = new Color(0x1F3A68);
     public static final Color COR_ETAPA = new Color(0x9AA3AD);
     public static final Color COR_RESULTADO = new Color(0xB03A2E);
+    /** Borda da janela de recorte. */
+    public static final Color COR_JANELA = new Color(0xC77700);
 
     private static final int PASSO_GRADE = 50;
     private static final Color COR_GRADE = new Color(232, 235, 238);
@@ -74,6 +76,20 @@ public final class DisplayTransformacoes extends JPanel implements Tela {
         repaint();
     }
 
+    /** Desenha o segmento de a até b (coordenadas do mundo) com o algoritmo do ponto médio. */
+    public void desenharSegmento(Ponto a, Ponto b, Color cor) {
+        Rasterizador.drawLine(this,
+                (int) Math.round(largura / 2 + a.x()), (int) Math.round(altura / 2 - a.y()),
+                (int) Math.round(largura / 2 + b.x()), (int) Math.round(altura / 2 - b.y()), cor);
+        repaint();
+    }
+
+    /** Desenha o retângulo [xMin, xMax] × [yMin, yMax] do mundo. */
+    public void desenharRetangulo(double xMin, double xMax, double yMin, double yMax, Color cor) {
+        desenhar(new Poligono(List.of(new Ponto(xMin, yMin), new Ponto(xMax, yMin),
+                new Ponto(xMax, yMax), new Ponto(xMin, yMax))), cor);
+    }
+
     /** Converte um pixel do display (clique) para coordenadas do mundo. */
     public Ponto dispositivoParaMundo(int pixelX, int pixelY) {
         return new Ponto(pixelX - largura / 2, altura / 2 - pixelY);
@@ -95,5 +111,7 @@ public final class DisplayTransformacoes extends JPanel implements Tela {
         g.drawString("■ etapas", 5, 30);
         g.setColor(COR_RESULTADO);
         g.drawString("■ resultado", 5, 45);
+        g.setColor(COR_JANELA);
+        g.drawString("■ janela", 5, 60);
     }
 }

@@ -20,6 +20,7 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
@@ -56,6 +57,11 @@ public class PainelTransformacoes extends JPanel {
     /** Ponto fixo (xf; yf), usado só nas opções com ponto fixo. */
     private final JTextField campoXf = new JTextField(3);
     private final JTextField campoYf = new JTextField(3);
+    /** Janela do mundo usada no recorte (aba G5). */
+    private final JTextField janelaXMin = new JTextField("-20", 4);
+    private final JTextField janelaXMax = new JTextField("140", 4);
+    private final JTextField janelaYMin = new JTextField("-40", 4);
+    private final JTextField janelaYMax = new JTextField("120", 4);
     private final DefaultListModel<String> modeloLista = new DefaultListModel<>();
     private final JList<String> listaOperacoes = new JList<>(modeloLista);
     private final JTextArea historico = new JTextArea();
@@ -154,7 +160,11 @@ public class PainelTransformacoes extends JPanel {
         controles.add(criarGrupoComposicao());
         controles.add(Box.createVerticalStrut(6));
         controles.add(criarBotoesPrincipais());
-        lateral.add(controles, BorderLayout.NORTH);
+        // Aba 1: polígono e composição. Aba 2: os demais tópicos da G5 (recorte, ...).
+        JTabbedPane abas = new JTabbedPane();
+        abas.addTab("Transformações", controles);
+        abas.addTab("G5: janela e recorte", criarAbaG5());
+        lateral.add(abas, BorderLayout.NORTH);
 
         JPanel painelHistorico = new JPanel(new BorderLayout());
         painelHistorico.setBorder(BorderFactory.createTitledBorder("Passo a passo"));
@@ -494,6 +504,122 @@ public class PainelTransformacoes extends JPanel {
         modeloLista.clear();
         for (int i = 0; i < operacoes.size(); i++) {
             modeloLista.addElement((i + 1) + ". " + operacoes.get(i));
+        }
+    }
+
+    /** Aba com os tópicos da G5 que agem sobre o polígono já transformado. */
+    private JPanel criarAbaG5() {
+        JPanel coluna = new JPanel();
+        coluna.setLayout(new BoxLayout(coluna, BoxLayout.Y_AXIS));
+        coluna.add(criarGrupoRecorte());
+        // Em NORTH, os grupos ficam com a altura natural, no topo da aba.
+        JPanel aba = new JPanel(new BorderLayout());
+        aba.add(coluna, BorderLayout.NORTH);
+        return aba;
+    }
+
+    private JPanel criarGrupoRecorte() {
+        JPanel grupo = new JPanel(new BorderLayout(5, 6));
+        grupo.setBorder(BorderFactory.createTitledBorder("Recorte de Cohen–Sutherland (slides 37–46)"));
+        JPanel campos = new JPanel(new GridLayout(2, 4, 5, 5));
+        campos.add(new JLabel("x mín:"));
+        campos.add(janelaXMin);
+        campos.add(new JLabel("x máx:"));
+        campos.add(janelaXMax);
+        campos.add(new JLabel("y mín:"));
+        campos.add(janelaYMin);
+        campos.add(new JLabel("y máx:"));
+        campos.add(janelaYMax);
+        grupo.add(campos, BorderLayout.NORTH);
+        JButton recortar = new JButton("Recortar pela janela");
+        recortar.addActionListener(e -> recortarNaJanela());
+        grupo.add(recortar, BorderLayout.SOUTH);
+        return grupo;
+    }
+
+    /**
+     * Polígono sobre o qual agem as operações da aba G5: o resultado da composição da lista,
+     * ou o polígono original quando a lista está vazia.
+     */
+    private Poligono poligonoAlvo() {
+        Poligono original = poligonoAtual();
+        if (operacoes.isEmpty()) return original;
+        Poligono resultado = motor.aplicar(original, List.copyOf(operacoes));
+        validarLimites(resultado, operacoes.size());
+        return resultado;
+    }
+
+    /** Diz no passo a passo qual polígono foi usado. */
+    private String descreverAlvo() {
+        return operacoes.isEmpty()
+                ? "Polígono usado: o original (a lista de composição está vazia).\n"
+                : "Polígono usado: o resultado das " + operacoes.size() + " operações da lista (em cinza).\n";
+    }
+
+    /** Lê a janela digitada: os quatro limites precisam ser números dentro do mundo visível. */
+    private RecorteCohenSutherland lerJanela() {
+        double xMin = lerNoMundo(janelaXMin, "x mín da janela", xMinMundo, xMaxMundo);
+        double xMax = lerNoMundo(janelaXMax, "x máx da janela", xMinMundo, xMaxMundo);
+        double yMin = lerNoMundo(janelaYMin, "y mín da janela", yMinMundo, yMaxMundo);
+        double yMax = lerNoMundo(janelaYMax, "y máx da janela", yMinMundo, yMaxMundo);
+        return new RecorteCohenSutherland(xMin, xMax, yMin, yMax);
+    }
+
+    /** Lê o número de um campo e confere se está entre min e max. */
+    private static double lerNoMundo(JTextField campo, String nome, double min, double max) {
+        double valor;
+        try {
+            valor = ler(campo);
+        } catch (NumberFormatException erro) {
+            throw new IllegalArgumentException(nome + ": \"" + campo.getText() + "\" não é um número.");
+        }
+        if (valor < min || valor > max) {
+            throw new IllegalArgumentException(nome + " = " + Operacao.numero(valor)
+                    + " está fora do mundo (de " + (int) min + " a " + (int) max + ").");
+        }
+        return valor;
+    }
+
+    /** Recorta cada aresta do polígono pela janela e escreve os passos de cada uma no texto. */
+    private static List<RecorteCohenSutherland.Segmento> recortarArestas(Poligono poligono,
+            RecorteCohenSutherland recorte, StringBuilder texto) {
+        List<RecorteCohenSutherland.Segmento> dentro = new ArrayList<>();
+        List<Ponto> v = poligono.vertices;
+        for (int i = 0; i < v.size(); i++) {
+            RecorteCohenSutherland.Resultado resultado = recorte.recortar(v.get(i), v.get((i + 1) % v.size()));
+            texto.append("Aresta ").append(i + 1).append(":\n");
+            for (String passo : resultado.passos()) {
+                texto.append("  ").append(passo).append('\n');
+            }
+            if (resultado.segmento() != null) dentro.add(resultado.segmento());
+        }
+        return dentro;
+    }
+
+    /** Botão "Recortar pela janela": desenha a janela e só a parte das arestas que fica dentro dela. */
+    private void recortarNaJanela() {
+        try {
+            ValidadorPoligono.validar(vertices);
+            String aviso = levarPoligonoParaOrigem();
+            RecorteCohenSutherland recorte = lerJanela();
+            Poligono alvo = poligonoAlvo();
+            redesenhar();
+            if (!operacoes.isEmpty()) display.desenhar(alvo, DisplayTransformacoes.COR_ETAPA);
+            display.desenharRetangulo(ler(janelaXMin), ler(janelaXMax), ler(janelaYMin), ler(janelaYMax),
+                    DisplayTransformacoes.COR_JANELA);
+            StringBuilder texto = new StringBuilder("Recorte de Cohen–Sutherland. Códigos: acima, abaixo, "
+                    + "direita, esquerda.\n" + aviso + descreverAlvo());
+            List<RecorteCohenSutherland.Segmento> dentro = recortarArestas(alvo, recorte, texto);
+            for (RecorteCohenSutherland.Segmento s : dentro) {
+                display.desenharSegmento(s.a(), s.b(), DisplayTransformacoes.COR_RESULTADO);
+            }
+            texto.append("Ficaram ").append(dentro.size()).append(" de ").append(alvo.vertices.size())
+                    .append(" arestas (inteiras ou recortadas).\n");
+            historico.setText(texto.toString());
+            historico.setCaretPosition(0);
+        } catch (IllegalArgumentException erro) {
+            JOptionPane.showMessageDialog(this, erro.getMessage(), "Entrada inválida",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 

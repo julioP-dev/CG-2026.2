@@ -31,6 +31,9 @@ clicar em **Definir**. Cada coordenada precisa ser um número dentro do mundo vi
 ao menos três vértices e recusa polígonos com arestas cruzadas, vértices repetidos
 ou área zero (`ValidadorPoligono`); polígonos côncavos continuam permitidos.
 
+Na aba **G5: janela e recorte**, **Recortar pela janela** aplica o recorte de
+Cohen–Sutherland (`RecorteCohenSutherland`, slides 37–46) a cada aresta do polígono.
+
 ## Responsabilidades e contratos
 
 | Classe | Parte | Responsabilidade |
