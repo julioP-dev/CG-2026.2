@@ -8,6 +8,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -62,6 +63,11 @@ public class PainelTransformacoes extends JPanel {
     private final JTextField janelaXMax = new JTextField("140", 4);
     private final JTextField janelaYMin = new JTextField("-40", 4);
     private final JTextField janelaYMax = new JTextField("120", 4);
+    /** Viewport: região da tela (mesmo plano do display) para onde a janela é levada. */
+    private final JTextField viewUMin = new JTextField("150", 4);
+    private final JTextField viewUMax = new JTextField("390", 4);
+    private final JTextField viewVMin = new JTextField("-290", 4);
+    private final JTextField viewVMax = new JTextField("-50", 4);
     private final DefaultListModel<String> modeloLista = new DefaultListModel<>();
     private final JList<String> listaOperacoes = new JList<>(modeloLista);
     private final JTextArea historico = new JTextArea();
@@ -512,6 +518,8 @@ public class PainelTransformacoes extends JPanel {
         JPanel coluna = new JPanel();
         coluna.setLayout(new BoxLayout(coluna, BoxLayout.Y_AXIS));
         coluna.add(criarGrupoRecorte());
+        coluna.add(Box.createVerticalStrut(6));
+        coluna.add(criarGrupoViewport());
         // Em NORTH, os grupos ficam com a altura natural, no topo da aba.
         JPanel aba = new JPanel(new BorderLayout());
         aba.add(coluna, BorderLayout.NORTH);
@@ -534,6 +542,25 @@ public class PainelTransformacoes extends JPanel {
         JButton recortar = new JButton("Recortar pela janela");
         recortar.addActionListener(e -> recortarNaJanela());
         grupo.add(recortar, BorderLayout.SOUTH);
+        return grupo;
+    }
+
+    private JPanel criarGrupoViewport() {
+        JPanel grupo = new JPanel(new BorderLayout(5, 6));
+        grupo.setBorder(BorderFactory.createTitledBorder("Janela → viewport (slides 29–33)"));
+        JPanel campos = new JPanel(new GridLayout(2, 4, 5, 5));
+        campos.add(new JLabel("u mín:"));
+        campos.add(viewUMin);
+        campos.add(new JLabel("u máx:"));
+        campos.add(viewUMax);
+        campos.add(new JLabel("v mín:"));
+        campos.add(viewVMin);
+        campos.add(new JLabel("v máx:"));
+        campos.add(viewVMax);
+        grupo.add(campos, BorderLayout.NORTH);
+        JButton mapear = new JButton("Recortar e levar para a viewport");
+        mapear.addActionListener(e -> mapearParaViewport());
+        grupo.add(mapear, BorderLayout.SOUTH);
         return grupo;
     }
 
@@ -621,6 +648,60 @@ public class PainelTransformacoes extends JPanel {
             JOptionPane.showMessageDialog(this, erro.getMessage(), "Entrada inválida",
                     JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    /**
+     * Botão "Recortar e levar para a viewport": recorta as arestas pela janela (Cohen–Sutherland)
+     * e aplica a matriz janela–viewport M aos pedaços que ficaram dentro.
+     */
+    private void mapearParaViewport() {
+        try {
+            ValidadorPoligono.validar(vertices);
+            String aviso = levarPoligonoParaOrigem();
+            RecorteCohenSutherland recorte = lerJanela();
+            double uMin = lerNoMundo(viewUMin, "u mín da viewport", xMinMundo, xMaxMundo);
+            double uMax = lerNoMundo(viewUMax, "u máx da viewport", xMinMundo, xMaxMundo);
+            double vMin = lerNoMundo(viewVMin, "v mín da viewport", yMinMundo, yMaxMundo);
+            double vMax = lerNoMundo(viewVMax, "v máx da viewport", yMinMundo, yMaxMundo);
+            double xMin = ler(janelaXMin), xMax = ler(janelaXMax), yMin = ler(janelaYMin), yMax = ler(janelaYMax);
+            Matriz3 m = JanelaViewport.matriz(xMin, xMax, yMin, yMax, uMin, uMax, vMin, vMax);
+            Poligono alvo = poligonoAlvo();
+
+            redesenhar();
+            if (!operacoes.isEmpty()) display.desenhar(alvo, DisplayTransformacoes.COR_ETAPA);
+            display.desenharRetangulo(xMin, xMax, yMin, yMax, DisplayTransformacoes.COR_JANELA);
+            display.desenharRetangulo(uMin, uMax, vMin, vMax, DisplayTransformacoes.COR_VIEWPORT);
+
+            StringBuilder recortePassos = new StringBuilder();
+            List<RecorteCohenSutherland.Segmento> dentro = recortarArestas(alvo, recorte, recortePassos);
+            StringBuilder texto = new StringBuilder("Janela → viewport: M = T(uMin, vMin) · S(sx, sy) · "
+                    + "T(−xMin, −yMin)\n" + aviso + descreverAlvo()
+                    + "sx = " + Operacao.numero((uMax - uMin) / (xMax - xMin))
+                    + ", sy = " + Operacao.numero((vMax - vMin) / (yMax - yMin)) + "\nM =\n" + formatarMatriz(m)
+                    + "Pedaços dentro da janela, levados para a viewport:\n");
+            for (RecorteCohenSutherland.Segmento s : dentro) {
+                Ponto a = m.aplicar(s.a());
+                Ponto b = m.aplicar(s.b());
+                display.desenharSegmento(a, b, DisplayTransformacoes.COR_RESULTADO);
+                texto.append("  ").append(descrever(new Poligono(List.of(s.a(), s.b()))))
+                        .append(" → ").append(descrever(new Poligono(List.of(a, b)))).append('\n');
+            }
+            texto.append("Recorte (Cohen–Sutherland):\n").append(recortePassos);
+            historico.setText(texto.toString());
+            historico.setCaretPosition(0);
+        } catch (IllegalArgumentException erro) {
+            JOptionPane.showMessageDialog(this, erro.getMessage(), "Entrada inválida",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /** As três linhas da matriz, com três casas decimais. */
+    private static String formatarMatriz(Matriz3 m) {
+        StringBuilder texto = new StringBuilder();
+        for (double[] linha : m.m) {
+            texto.append(String.format(Locale.ROOT, "[%9.3f %9.3f %9.3f]%n", linha[0], linha[1], linha[2]));
+        }
+        return texto.toString();
     }
 
     private void limparTudo() {

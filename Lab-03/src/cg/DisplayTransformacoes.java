@@ -22,6 +22,8 @@ public final class DisplayTransformacoes extends JPanel implements Tela {
     public static final Color COR_RESULTADO = new Color(0xB03A2E);
     /** Borda da janela de recorte. */
     public static final Color COR_JANELA = new Color(0xC77700);
+    /** Borda da viewport. */
+    public static final Color COR_VIEWPORT = new Color(0x2E7D32);
 
     private static final int PASSO_GRADE = 50;
     private static final Color COR_GRADE = new Color(232, 235, 238);
@@ -113,5 +115,7 @@ public final class DisplayTransformacoes extends JPanel implements Tela {
         g.drawString("■ resultado", 5, 45);
         g.setColor(COR_JANELA);
         g.drawString("■ janela", 5, 60);
+        g.setColor(COR_VIEWPORT);
+        g.drawString("■ viewport", 5, 75);
     }
 }

@@ -33,6 +33,8 @@ ou área zero (`ValidadorPoligono`); polígonos côncavos continuam permitidos.
 
 Na aba **G5: janela e recorte**, **Recortar pela janela** aplica o recorte de
 Cohen–Sutherland (`RecorteCohenSutherland`, slides 37–46) a cada aresta do polígono.
+**Recortar e levar para a viewport** recorta e aplica a matriz janela–viewport
+(`JanelaViewport`, slides 29–33) aos pedaços que ficaram dentro da janela.
 
 ## Responsabilidades e contratos
 
