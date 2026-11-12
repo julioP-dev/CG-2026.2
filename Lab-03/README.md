@@ -30,7 +30,7 @@ ao menos três vértices, mas não valida simplicidade ou área do polígono des
 | Classe | Parte | Responsabilidade |
 | --- | --- | --- |
 | `Rasterizador` | 1, existente | Arestas pelo ponto médio, com saída por `Tela.setPixel`. |
-| `TransformacoesBasicas` | 2, outro integrante | Futuras fábricas de translação, escala e rotação. Não implementada nesta entrega. |
+| `TransformacoesBasicas` | 2 | Translação, escala e rotação. |
 | `ReflexaoCisalhamento` | 3 | Quatro reflexões e cisalhamentos em X e em Y. |
 | `Matriz3` | 4 | Identidade, produto 3x3 e aplicação a coordenadas homogêneas. |
 | `Composicao` | 4 | Ordem de aplicação, transformação de polígonos e operações com ponto fixo. |
@@ -138,8 +138,10 @@ Rotação: T(p) · R · T(-p), c = cos(graus), s = sen(graus)
 
 O cosseno e o seno são calculados após `Math.toRadians(graus)`. Para escala
 (2,2) com pivô (2,1), o ponto (4,1) passa a (6,1), como no slide 25 da G5.
-O pivô permanece inalterado. Esses métodos estão disponíveis na API e nos testes;
-a interface atual mantém os controles das transformações em torno da origem.
+O pivô permanece inalterado. Esses métodos estão disponíveis na API e nos testes.
+Na interface, as opções **Escala com ponto fixo** e **Rotação com ponto fixo** (campos `xf; yf`)
+adicionam à lista três operações, como nos slides 24 e 26: translação de `(-xf, -yf)`,
+a escala ou rotação, e translação de `(xf, yf)`.
 
 ## Conectar a Parte 2 quando estiver pronta
 

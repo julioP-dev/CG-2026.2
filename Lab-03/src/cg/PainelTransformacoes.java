@@ -41,16 +41,35 @@ public class PainelTransformacoes extends JPanel {
 
     private final JComboBox<Forma> comboForma = new JComboBox<>(Forma.values());
     private final JLabel instrucaoClique = new JLabel(INSTRUCAO_CLIQUE);
-    private final JComboBox<Operacao.Tipo> comboTipo = new JComboBox<>();
+    /** Guarda as operações do motor (Operacao.Tipo) e as duas opções com ponto fixo (PontoFixo). */
+    private final JComboBox<Object> comboTipo = new JComboBox<>();
     private final JLabel rotuloA = new JLabel();
     private final JLabel rotuloB = new JLabel();
     private final JTextField campoA = new JTextField(6);
     private final JTextField campoB = new JTextField(6);
+    /** Ponto fixo (xf; yf), usado só nas opções com ponto fixo. */
+    private final JTextField campoXf = new JTextField(3);
+    private final JTextField campoYf = new JTextField(3);
     private final DefaultListModel<String> modeloLista = new DefaultListModel<>();
     private final JList<String> listaOperacoes = new JList<>(modeloLista);
     private final JTextArea historico = new JTextArea();
     private final JButton botaoAplicar = new JButton("Aplicar composição");
     private Timer temporizador;
+
+    /**
+     * Transformações com ponto fixo (aula G5, slides 22 a 27). Não existem como operação do motor:
+     * cada uma é montada com três operações da lista, T(xf, yf) · M · T(-xf, -yf).
+     */
+    enum PontoFixo {
+        ESCALA("Escala com ponto fixo"),
+        ROTACAO("Rotação com ponto fixo");
+
+        private final String nome;
+
+        PontoFixo(String nome) { this.nome = nome; }
+
+        @Override public String toString() { return nome; }
+    }
 
     private enum Forma {
 
@@ -86,6 +105,13 @@ public class PainelTransformacoes extends JPanel {
             // Na tela, os dois cisalhamentos são adicionados separadamente.
             if (tipo != Operacao.Tipo.CISALHAMENTO && motor.suporta(tipo)) {
                 comboTipo.addItem(tipo);
+            }
+        }
+        // As opções com ponto fixo usam translação, escala e rotação, então dependem das três.
+        if (motor.suporta(Operacao.Tipo.TRANSLACAO) && motor.suporta(Operacao.Tipo.ESCALA)
+                && motor.suporta(Operacao.Tipo.ROTACAO)) {
+            for (PontoFixo opcao : PontoFixo.values()) {
+                comboTipo.addItem(opcao);
             }
         }
         display = new DisplayTransformacoes(largura, altura);
@@ -147,13 +173,18 @@ public class PainelTransformacoes extends JPanel {
     private JPanel criarGrupoTransformacao() {
         JPanel grupo = new JPanel(new BorderLayout(5, 6));
         grupo.setBorder(BorderFactory.createTitledBorder("Transformação"));
-        JPanel campos = new JPanel(new GridLayout(3, 2, 5, 5));
+        JPanel campos = new JPanel(new GridLayout(4, 2, 5, 5));
         campos.add(new JLabel("Tipo:"));
         campos.add(comboTipo);
         campos.add(rotuloA);
         campos.add(campoA);
         campos.add(rotuloB);
         campos.add(campoB);
+        campos.add(new JLabel("Ponto fixo (xf; yf):"));
+        JPanel pontoFixo = new JPanel(new GridLayout(1, 2, 5, 0));
+        pontoFixo.add(campoXf);
+        pontoFixo.add(campoYf);
+        campos.add(pontoFixo);
         grupo.add(campos, BorderLayout.NORTH);
 
         JButton adicionar = new JButton("Adicionar à composição");
@@ -224,7 +255,21 @@ public class PainelTransformacoes extends JPanel {
 
     /** Ajusta rótulos e valores iniciais dos campos conforme o tipo de transformação. */
     private void atualizarCampos() {
-        switch ((Operacao.Tipo) comboTipo.getSelectedItem()) {
+        Object escolhido = comboTipo.getSelectedItem();
+        boolean comPontoFixo = escolhido instanceof PontoFixo;
+        campoXf.setEnabled(comPontoFixo);
+        campoYf.setEnabled(comPontoFixo);
+        campoXf.setText(comPontoFixo ? "0" : "");
+        campoYf.setText(comPontoFixo ? "0" : "");
+        if (comPontoFixo) {
+            if (escolhido == PontoFixo.ESCALA) {
+                configurarCampos("Sx:", "1", "Sy:", "1");
+            } else {
+                configurarCampos("Ângulo (°):", "0", null, null);
+            }
+            return;
+        }
+        switch ((Operacao.Tipo) escolhido) {
             case TRANSLACAO -> configurarCampos("Δx:", "0", "Δy:", "0");
             case ESCALA -> configurarCampos("Sx:", "1", "Sy:", "1");
             case ROTACAO -> configurarCampos("Ângulo (°):", "0", null, null);
@@ -249,16 +294,37 @@ public class PainelTransformacoes extends JPanel {
 
     private void adicionarOperacao() {
         try {
-            Operacao.Tipo tipo = (Operacao.Tipo) comboTipo.getSelectedItem();
+            Object escolhido = comboTipo.getSelectedItem();
             double a = campoA.isEnabled() ? ler(campoA) : 0;
             double b = campoB.isEnabled() ? ler(campoB) : 0;
-            operacoes.add(new Operacao(tipo, a, b));
+            if (escolhido instanceof PontoFixo comPontoFixo) {
+                operacoes.addAll(expandirPontoFixo(comPontoFixo, a, b, ler(campoXf), ler(campoYf)));
+            } else {
+                Operacao.Tipo tipo = (Operacao.Tipo) escolhido;
+                operacoes.add(new Operacao(tipo, a, b));
+            }
             atualizarLista();
         } catch (NumberFormatException erro) {
             JOptionPane.showMessageDialog(this,
                     "Os parâmetros devem ser números (aceita ponto ou vírgula decimal).",
                     "Entrada inválida", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    /**
+     * Monta a transformação com ponto fixo (xf, yf) em três passos (slides 24 e 26):
+     * 1) translada o ponto fixo para a origem; 2) escala (a = Sx, b = Sy) ou gira (a = ângulo);
+     * 3) translada de volta. O ponto (xf, yf) fica no mesmo lugar.
+     */
+    static List<Operacao> expandirPontoFixo(PontoFixo tipo, double a, double b, double xf, double yf) {
+        Operacao transformacao = (tipo == PontoFixo.ESCALA)
+                ? new Operacao(Operacao.Tipo.ESCALA, a, b)
+                : new Operacao(Operacao.Tipo.ROTACAO, a, 0);
+        List<Operacao> passos = new ArrayList<>();
+        passos.add(new Operacao(Operacao.Tipo.TRANSLACAO, -xf, -yf));
+        passos.add(transformacao);
+        passos.add(new Operacao(Operacao.Tipo.TRANSLACAO, xf, yf));
+        return passos;
     }
 
     private static double ler(JTextField campo) {
