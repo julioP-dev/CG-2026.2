@@ -333,7 +333,10 @@ public class PainelTransformacoes extends JPanel {
             vertices.addAll(digitados);
             redesenhar();
             atualizarCampoVertices();
-            instrucaoClique.setText(vertices.size() + " vértices definidos.");
+            String aviso = levarPoligonoParaOrigem();
+            instrucaoClique.setText(vertices.size() + " vértices definidos"
+                    + (aviso.isEmpty() ? "." : " e levados para a origem."));
+            if (!aviso.isEmpty()) historico.setText(aviso);
         } catch (IllegalArgumentException erro) {
             JOptionPane.showMessageDialog(this, erro.getMessage(), "Vértices inválidos",
                     JOptionPane.ERROR_MESSAGE);
@@ -513,6 +516,25 @@ public class PainelTransformacoes extends JPanel {
         display.desenhar(poligonoAtual(), DisplayTransformacoes.COR_ORIGINAL);
     }
 
+    /**
+     * O polígono deve estar na origem (enunciado do laboratório). Se o centroide não está em (0, 0),
+     * aplica aos vértices a translação T(−Cx, −Cy) e redesenha.
+     *
+     * @return o aviso para o passo a passo, ou "" se o polígono já estava na origem
+     */
+    private String levarPoligonoParaOrigem() {
+        if (CentroDoPoligono.estaNaOrigem(vertices)) return "";
+        Ponto c = CentroDoPoligono.centroide(vertices);
+        List<Ponto> naOrigem = CentroDoPoligono.levarParaOrigem(vertices);
+        vertices.clear();
+        vertices.addAll(naOrigem);
+        redesenhar();
+        atualizarCampoVertices();
+        return "O centroide estava em (" + Operacao.numero(c.x()) + "; " + Operacao.numero(c.y())
+                + "): o polígono foi levado para a origem com T(" + Operacao.numero(-c.x()) + "; "
+                + Operacao.numero(-c.y()) + ").\n";
+    }
+
     private Poligono poligonoAtual() {
         return new Poligono(new ArrayList<>(vertices));
     }
@@ -524,6 +546,7 @@ public class PainelTransformacoes extends JPanel {
     private void aplicar() {
         try {
             ValidadorPoligono.validar(vertices);
+            String aviso = levarPoligonoParaOrigem();
             if (operacoes.isEmpty()) {
                 throw new IllegalArgumentException("Adicione ao menos uma transformação à composição.");
             }
@@ -538,7 +561,7 @@ public class PainelTransformacoes extends JPanel {
 
             redesenhar();
             historico.setText("Coordenadas do mundo (origem no centro, y para cima).\n"
-                    + "Original: " + descrever(original) + "\n");
+                    + aviso + "Original: " + descrever(original) + "\n");
             String matriz = motor.matrizComposta(composicao);
             if (matriz != null) {
                 historico.append("Matriz composta (M = Mn·…·M1):\n" + matriz);

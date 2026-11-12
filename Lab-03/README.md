@@ -22,7 +22,8 @@ O original aparece em azul, as etapas em cinza e o resultado em vermelho.
 
 Os modelos são um quadrado e um hexágono (regulares) e um polígono irregular côncavo.
 Todos têm centroide na origem cartesiana. O modo de cliques permite criar outros
-modelos; nele, cabe ao usuário posicionar o polígono em torno da origem.
+modelos. Polígonos clicados ou digitados são levados para a origem (centroide em (0, 0),
+pela translação `T(-Cx, -Cy)`) ao clicar em **Definir** ou em **Aplicar composição**.
 
 Também é possível **digitar 3 ou 4 vértices** (x e y de cada um; o 4º é opcional) e
 clicar em **Definir**. Cada coordenada precisa ser um número dentro do mundo visível
