@@ -22,7 +22,11 @@ O original aparece em azul, as etapas em cinza e o resultado em vermelho.
 
 Os modelos são um quadrado regular e um polígono irregular côncavo. Ambos têm
 centroide na origem cartesiana. O modo de cliques permite criar outros modelos;
-nele, cabe ao usuário posicionar o polígono em torno da origem. A aplicação exige
+nele, cabe ao usuário posicionar o polígono em torno da origem.
+
+Também é possível **digitar 3 ou 4 vértices** (x e y de cada um; o 4º é opcional) e
+clicar em **Definir**. Cada coordenada precisa ser um número dentro do mundo visível
+(com o display de 800x600: x de -400 a 399 e y de -299 a 300). Depois a aplicação exige
 ao menos três vértices e recusa polígonos com arestas cruzadas, vértices repetidos
 ou área zero (`ValidadorPoligono`); polígonos côncavos continuam permitidos.
 

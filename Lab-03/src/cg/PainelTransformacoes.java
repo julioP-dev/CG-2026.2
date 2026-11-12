@@ -41,6 +41,12 @@ public class PainelTransformacoes extends JPanel {
 
     private final JComboBox<Forma> comboForma = new JComboBox<>(Forma.values());
     private final JLabel instrucaoClique = new JLabel(INSTRUCAO_CLIQUE);
+    /** Vértices digitados (x e y de cada um): até 4, sendo os 3 primeiros obrigatórios. */
+    private static final int MAX_VERTICES_DIGITADOS = 4;
+    private final JTextField[] camposX = criarCampos();
+    private final JTextField[] camposY = criarCampos();
+    /** Limites do mundo visível: o que o display consegue mostrar (origem no centro, y para cima). */
+    private final int xMinMundo, xMaxMundo, yMinMundo, yMaxMundo;
     /** Guarda as operações do motor (Operacao.Tipo) e as duas opções com ponto fixo (PontoFixo). */
     private final JComboBox<Object> comboTipo = new JComboBox<>();
     private final JLabel rotuloA = new JLabel();
@@ -102,6 +108,11 @@ public class PainelTransformacoes extends JPanel {
     public PainelTransformacoes(int largura, int altura, MotorTransformacoes motor) {
         super(new BorderLayout(8, 8));
         this.motor = motor;
+        // Pixel 0 a largura-1 vira x de -largura/2 a largura/2-1; pixel 0 a altura-1 vira y de altura/2 a -altura/2+1.
+        xMinMundo = -largura / 2;
+        xMaxMundo = largura / 2 - 1;
+        yMinMundo = -altura / 2 + 1;
+        yMaxMundo = altura / 2;
         for (Operacao.Tipo tipo : Operacao.Tipo.values()) {
             // O tipo simultâneo é mantido na API por compatibilidade.
             // Na tela, os dois cisalhamentos são adicionados separadamente.
@@ -161,16 +172,37 @@ public class PainelTransformacoes extends JPanel {
         linhaForma.add(new JLabel("Forma:"), BorderLayout.WEST);
         linhaForma.add(comboForma, BorderLayout.CENTER);
         grupo.add(linhaForma, BorderLayout.NORTH);
-        grupo.add(instrucaoClique, BorderLayout.CENTER);
 
-        JPanel botoes = new JPanel(new GridLayout(1, 2, 5, 0));
-        JButton carregar = new JButton("Carregar forma");
-        JButton novo = new JButton("Novo polígono");
+        // Quatro linhas "Vn: x [   ] y [   ]"; o vértice 4 é opcional (sem ele, o polígono é um triângulo).
+        JPanel grade = new JPanel(new GridLayout(MAX_VERTICES_DIGITADOS, 4, 4, 3));
+        for (int i = 0; i < MAX_VERTICES_DIGITADOS; i++) {
+            grade.add(new JLabel("V" + (i + 1) + (i == 3 ? " (opc.)  x:" : "  x:")));
+            grade.add(camposX[i]);
+            grade.add(new JLabel("y:"));
+            grade.add(camposY[i]);
+        }
+        JLabel faixa = new JLabel("Digite 3 ou 4 vértices: x de " + xMinMundo + " a " + xMaxMundo
+                + "; y de " + yMinMundo + " a " + yMaxMundo);
+        faixa.setFont(faixa.getFont().deriveFont(Font.PLAIN, 11f));
+        JPanel digitacao = new JPanel(new BorderLayout(5, 3));
+        digitacao.add(faixa, BorderLayout.NORTH);
+        digitacao.add(grade, BorderLayout.CENTER);
+        JPanel centro = new JPanel(new BorderLayout(5, 4));
+        centro.add(instrucaoClique, BorderLayout.NORTH);
+        centro.add(digitacao, BorderLayout.CENTER);
+        grupo.add(centro, BorderLayout.CENTER);
+
+        JPanel botoes = new JPanel(new GridLayout(1, 3, 5, 0));
+        JButton carregar = new JButton("Carregar");
+        JButton novo = new JButton("Novo");
+        JButton definir = new JButton("Definir");
         botoes.add(carregar);
         botoes.add(novo);
+        botoes.add(definir);
         grupo.add(botoes, BorderLayout.SOUTH);
         carregar.addActionListener(e -> carregarForma());
         novo.addActionListener(e -> novoPoligono());
+        definir.addActionListener(e -> definirVerticesDigitados());
         return grupo;
     }
 
@@ -242,6 +274,7 @@ public class PainelTransformacoes extends JPanel {
                 Ponto ponto = display.dispositivoParaMundo(evento.getX(), evento.getY());
                 vertices.add(ponto);
                 redesenhar();
+                atualizarCampoVertices();
                 instrucaoClique.setText("Vértice " + vertices.size() + ": ("
                         + Operacao.numero(ponto.x()) + "; " + Operacao.numero(ponto.y()) + ").");
             }
@@ -254,6 +287,7 @@ public class PainelTransformacoes extends JPanel {
         vertices.addAll(forma.vertices());
         formaCarregada = true;
         redesenhar();
+        atualizarCampoVertices();
         instrucaoClique.setText("Forma carregada: clique para redesenhar.");
     }
 
@@ -261,7 +295,95 @@ public class PainelTransformacoes extends JPanel {
         formaCarregada = false;
         vertices.clear();
         redesenhar();
+        atualizarCampoVertices();
         instrucaoClique.setText(INSTRUCAO_CLIQUE);
+    }
+
+    private static JTextField[] criarCampos() {
+        JTextField[] campos = new JTextField[MAX_VERTICES_DIGITADOS];
+        for (int i = 0; i < campos.length; i++) campos[i] = new JTextField(4);
+        return campos;
+    }
+
+    /** Mostra nos campos os vértices atuais, se forem até 4; com mais que isso, deixa os campos vazios. */
+    private void atualizarCampoVertices() {
+        for (int i = 0; i < MAX_VERTICES_DIGITADOS; i++) {
+            boolean existe = vertices.size() <= MAX_VERTICES_DIGITADOS && i < vertices.size();
+            camposX[i].setText(existe ? Operacao.numero(vertices.get(i).x()) : "");
+            camposY[i].setText(existe ? Operacao.numero(vertices.get(i).y()) : "");
+        }
+    }
+
+    /** Lê os vértices digitados, valida (mundo e polígono) e passa a usá-los como polígono atual. */
+    private void definirVerticesDigitados() {
+        try {
+            String[] xs = new String[MAX_VERTICES_DIGITADOS];
+            String[] ys = new String[MAX_VERTICES_DIGITADOS];
+            for (int i = 0; i < MAX_VERTICES_DIGITADOS; i++) {
+                xs[i] = camposX[i].getText();
+                ys[i] = camposY[i].getText();
+            }
+            List<Ponto> digitados = lerVerticesDigitados(xs, ys, xMinMundo, xMaxMundo, yMinMundo, yMaxMundo);
+            ValidadorPoligono.validar(digitados);
+            formaCarregada = false;
+            vertices.clear();
+            vertices.addAll(digitados);
+            redesenhar();
+            atualizarCampoVertices();
+            instrucaoClique.setText(vertices.size() + " vértices definidos.");
+        } catch (IllegalArgumentException erro) {
+            JOptionPane.showMessageDialog(this, erro.getMessage(), "Vértices inválidos",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Converte o que foi digitado (x e y de cada vértice, em texto) em pontos do mundo.
+     * Os 3 primeiros vértices são obrigatórios; o 4º é opcional, mas se for usado precisa de x e y.
+     * Cada coordenada deve ser um número finito (aceita ponto ou vírgula decimal) dentro do mundo visível.
+     *
+     * @throws IllegalArgumentException dizendo qual vértice e qual coordenada estão errados
+     */
+    static List<Ponto> lerVerticesDigitados(String[] xs, String[] ys,
+            double xMin, double xMax, double yMin, double yMax) {
+        List<Ponto> lista = new ArrayList<>();
+        for (int i = 0; i < xs.length; i++) {
+            String textoX = xs[i].trim();
+            String textoY = ys[i].trim();
+            int numero = i + 1;
+            if (textoX.isEmpty() && textoY.isEmpty()) {
+                if (i < 3) {
+                    throw new IllegalArgumentException("Preencha x e y do vértice " + numero
+                            + ". Os 3 primeiros vértices são obrigatórios.");
+                }
+                continue; // vértice 4 vazio: polígono de 3 vértices
+            }
+            if (textoX.isEmpty() || textoY.isEmpty()) {
+                throw new IllegalArgumentException("Vértice " + numero + ": preencha x e y.");
+            }
+            double x = lerCoordenada(textoX, "Vértice " + numero + ", x", xMin, xMax);
+            double y = lerCoordenada(textoY, "Vértice " + numero + ", y", yMin, yMax);
+            lista.add(new Ponto(x, y));
+        }
+        return lista;
+    }
+
+    /** Lê um número finito e confere se está entre min e max (os limites do mundo). */
+    private static double lerCoordenada(String texto, String nome, double min, double max) {
+        double valor;
+        try {
+            valor = Double.parseDouble(texto.replace(',', '.'));
+        } catch (NumberFormatException erro) {
+            throw new IllegalArgumentException(nome + ": \"" + texto + "\" não é um número.");
+        }
+        if (!Double.isFinite(valor)) {
+            throw new IllegalArgumentException(nome + ": o valor deve ser um número finito.");
+        }
+        if (valor < min || valor > max) {
+            throw new IllegalArgumentException(nome + " = " + Operacao.numero(valor)
+                    + " está fora do mundo (de " + (int) min + " a " + (int) max + ").");
+        }
+        return valor;
     }
 
     /** Ajusta rótulos e valores iniciais dos campos conforme o tipo de transformação. */
@@ -375,6 +497,7 @@ public class PainelTransformacoes extends JPanel {
         operacoes.clear();
         atualizarLista();
         redesenhar();
+        atualizarCampoVertices();
         historico.setText(TEXTO_INICIAL);
         instrucaoClique.setText(INSTRUCAO_CLIQUE);
     }
