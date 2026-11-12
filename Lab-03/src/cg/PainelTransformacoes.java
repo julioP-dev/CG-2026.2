@@ -82,6 +82,9 @@ public class PainelTransformacoes extends JPanel {
     private enum Forma {
 
         QUADRADO("Quadrado", -75, -75, 75, -75, 75, 75, -75, 75),
+        // Hexágono regular de raio 100, com o centro na origem.
+        REGULAR("Regular (hexágono)", 100, 0, 50, 86.60254037844386, -50, 86.60254037844386,
+                -100, 0, -50, -86.60254037844386, 50, -86.60254037844386),
         // Forma em L de área 15000 e centroide (0, 0), assimétrica nas reflexões.
         IRREGULAR("Irregular côncavo", -75, -50, 125, -50, 125, 0,
                 -25, 0, -25, 100, -75, 100);

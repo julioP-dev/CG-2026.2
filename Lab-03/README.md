@@ -20,9 +20,9 @@ escolha uma reflexão ou cisalhamento, clique em **Adicionar à composição** e
 depois em **Aplicar composição**. A ordem da lista é a ordem de aplicação.
 O original aparece em azul, as etapas em cinza e o resultado em vermelho.
 
-Os modelos são um quadrado regular e um polígono irregular côncavo. Ambos têm
-centroide na origem cartesiana. O modo de cliques permite criar outros modelos;
-nele, cabe ao usuário posicionar o polígono em torno da origem.
+Os modelos são um quadrado e um hexágono (regulares) e um polígono irregular côncavo.
+Todos têm centroide na origem cartesiana. O modo de cliques permite criar outros
+modelos; nele, cabe ao usuário posicionar o polígono em torno da origem.
 
 Também é possível **digitar 3 ou 4 vértices** (x e y de cada um; o 4º é opcional) e
 clicar em **Definir**. Cada coordenada precisa ser um número dentro do mundo visível
