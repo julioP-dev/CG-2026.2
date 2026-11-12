@@ -20,17 +20,22 @@ escolha uma reflexão ou cisalhamento, clique em **Adicionar à composição** e
 depois em **Aplicar composição**. A ordem da lista é a ordem de aplicação.
 O original aparece em azul, as etapas em cinza e o resultado em vermelho.
 
-Os modelos são um quadrado regular e um polígono irregular côncavo. Ambos têm
-centroide na origem cartesiana. O modo de cliques permite criar outros modelos;
-nele, cabe ao usuário posicionar o polígono em torno da origem. A aplicação exige
-ao menos três vértices, mas não valida simplicidade ou área do polígono desenhado.
+Os modelos são um quadrado e um hexágono (regulares) e um polígono irregular côncavo.
+Todos têm centroide na origem cartesiana. O modo de cliques permite criar outros
+modelos; nele, cabe ao usuário posicionar o polígono em torno da origem.
+
+Também é possível **digitar 3 ou 4 vértices** (x e y de cada um; o 4º é opcional) e
+clicar em **Definir**. Cada coordenada precisa ser um número dentro do mundo visível
+(com o display de 800x600: x de -400 a 399 e y de -299 a 300). Depois a aplicação exige
+ao menos três vértices e recusa polígonos com arestas cruzadas, vértices repetidos
+ou área zero (`ValidadorPoligono`); polígonos côncavos continuam permitidos.
 
 ## Responsabilidades e contratos
 
 | Classe | Parte | Responsabilidade |
 | --- | --- | --- |
 | `Rasterizador` | 1, existente | Arestas pelo ponto médio, com saída por `Tela.setPixel`. |
-| `TransformacoesBasicas` | 2, outro integrante | Futuras fábricas de translação, escala e rotação. Não implementada nesta entrega. |
+| `TransformacoesBasicas` | 2 | Translação, escala e rotação. |
 | `ReflexaoCisalhamento` | 3 | Quatro reflexões e cisalhamentos em X e em Y. |
 | `Matriz3` | 4 | Identidade, produto 3x3 e aplicação a coordenadas homogêneas. |
 | `Composicao` | 4 | Ordem de aplicação, transformação de polígonos e operações com ponto fixo. |
@@ -138,8 +143,10 @@ Rotação: T(p) · R · T(-p), c = cos(graus), s = sen(graus)
 
 O cosseno e o seno são calculados após `Math.toRadians(graus)`. Para escala
 (2,2) com pivô (2,1), o ponto (4,1) passa a (6,1), como no slide 25 da G5.
-O pivô permanece inalterado. Esses métodos estão disponíveis na API e nos testes;
-a interface atual mantém os controles das transformações em torno da origem.
+O pivô permanece inalterado. Esses métodos estão disponíveis na API e nos testes.
+Na interface, as opções **Escala com ponto fixo** e **Rotação com ponto fixo** (campos `xf; yf`)
+adicionam à lista três operações, como nos slides 24 e 26: translação de `(-xf, -yf)`,
+a escala ou rotação, e translação de `(xf, yf)`.
 
 ## Conectar a Parte 2 quando estiver pronta
 
