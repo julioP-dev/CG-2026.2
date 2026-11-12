@@ -291,6 +291,16 @@ public class PainelTransformacoes extends JPanel {
                     formaCarregada = false;
                 }
                 Ponto ponto = display.dispositivoParaMundo(evento.getX(), evento.getY());
+                // Só aceita o vértice se o polígono, fechado com ele, continuar válido.
+                String problema = problemaAoAcrescentar(ponto);
+                if (problema != null) {
+                    instrucaoClique.setText("Vértice recusado: veja a mensagem.");
+                    JOptionPane.showMessageDialog(PainelTransformacoes.this,
+                            "O vértice (" + Operacao.numero(ponto.x()) + "; " + Operacao.numero(ponto.y())
+                                    + ") não foi acrescentado.\n" + problema,
+                            "Vértice recusado", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
                 vertices.add(ponto);
                 redesenhar();
                 atualizarCampoVertices();
@@ -298,6 +308,27 @@ public class PainelTransformacoes extends JPanel {
                         + Operacao.numero(ponto.x()) + "; " + Operacao.numero(ponto.y()) + ").");
             }
         });
+    }
+
+    /**
+     * Confere se o polígono continua válido com o novo vértice no fim (e a aresta que fecha o contorno).
+     * Com 1 vértice não há o que conferir; com 2, só que não sejam iguais; a partir de 3, o ValidadorPoligono.
+     *
+     * @return o motivo da recusa, ou null se o vértice pode entrar
+     */
+    private String problemaAoAcrescentar(Ponto novo) {
+        List<Ponto> tentativa = new ArrayList<>(vertices);
+        tentativa.add(novo);
+        if (tentativa.size() == 2 && tentativa.get(0).equals(novo)) {
+            return "Os vértices 1 e 2 são iguais. Um polígono não pode ter vértices repetidos.";
+        }
+        if (tentativa.size() < 3) return null;
+        try {
+            ValidadorPoligono.validar(tentativa);
+            return null;
+        } catch (IllegalArgumentException erro) {
+            return erro.getMessage();
+        }
     }
 
     private void carregarForma() {
