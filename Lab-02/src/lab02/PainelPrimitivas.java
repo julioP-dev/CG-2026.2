@@ -52,13 +52,18 @@ public class PainelPrimitivas extends JPanel {
 
         JPanel controles = new JPanel(new BorderLayout(5, 8));
         controles.setBorder(BorderFactory.createTitledBorder("Circunferência — coordenadas do dispositivo"));
-        JPanel campos = new JPanel(new java.awt.GridLayout(4, 2, 5, 5));
-        campos.add(new JLabel("Algoritmo:"));
-        campos.add(comboAlgoritmo);
+        // O combo fica numa linha própria, com toda a largura, para o nome do algoritmo caber inteiro.
+        JPanel linhaAlgoritmo = new JPanel(new BorderLayout(5, 0));
+        linhaAlgoritmo.add(new JLabel("Algoritmo:"), BorderLayout.WEST);
+        linhaAlgoritmo.add(comboAlgoritmo, BorderLayout.CENTER);
+        JPanel campos = new JPanel(new java.awt.GridLayout(3, 2, 5, 5));
         campos.add(new JLabel("Centro X (px):")); campos.add(campoX);
         campos.add(new JLabel("Centro Y (px):")); campos.add(campoY);
         campos.add(new JLabel("Raio (px):")); campos.add(campoRaio);
-        controles.add(campos, BorderLayout.NORTH);
+        JPanel entradas = new JPanel(new BorderLayout(0, 5));
+        entradas.add(linhaAlgoritmo, BorderLayout.NORTH);
+        entradas.add(campos, BorderLayout.CENTER);
+        controles.add(entradas, BorderLayout.NORTH);
 
         JPanel acoes = new JPanel(new BorderLayout(4, 5));
         acoes.add(instrucaoClique, BorderLayout.NORTH);
