@@ -55,6 +55,8 @@ public class PainelTransformacoes extends JPanel {
     private final JTextArea historico = new JTextArea();
     private final JButton botaoAplicar = new JButton("Aplicar composição");
     private Timer temporizador;
+    /** True enquanto o polígono na tela é uma forma padrão ainda não editada pelo usuário. */
+    private boolean formaCarregada;
 
     /**
      * Transformações com ponto fixo (aula G5, slides 22 a 27). Não existem como operação do motor:
@@ -120,6 +122,8 @@ public class PainelTransformacoes extends JPanel {
         configurarCliques();
         atualizarCampos();
         carregarForma();
+        // Só depois de carregar a primeira forma, para trocar a forma ao escolher no combo.
+        comboForma.addActionListener(e -> carregarForma());
     }
 
     private JPanel criarPainelLateral() {
@@ -230,6 +234,11 @@ public class PainelTransformacoes extends JPanel {
         display.addMouseListener(new MouseAdapter() {
             @Override public void mousePressed(MouseEvent evento) {
                 if (!SwingUtilities.isLeftMouseButton(evento)) return;
+                // O 1º clique descarta a forma padrão: o polígono passa a ser só o dos cliques.
+                if (formaCarregada) {
+                    vertices.clear();
+                    formaCarregada = false;
+                }
                 Ponto ponto = display.dispositivoParaMundo(evento.getX(), evento.getY());
                 vertices.add(ponto);
                 redesenhar();
@@ -243,11 +252,13 @@ public class PainelTransformacoes extends JPanel {
         Forma forma = (Forma) comboForma.getSelectedItem();
         vertices.clear();
         vertices.addAll(forma.vertices());
+        formaCarregada = true;
         redesenhar();
-        instrucaoClique.setText(forma + ": " + vertices.size() + " vértices. Clique para acrescentar.");
+        instrucaoClique.setText("Forma carregada: clique para redesenhar.");
     }
 
     private void novoPoligono() {
+        formaCarregada = false;
         vertices.clear();
         redesenhar();
         instrucaoClique.setText(INSTRUCAO_CLIQUE);
@@ -350,6 +361,7 @@ public class PainelTransformacoes extends JPanel {
     }
 
     private void limparTudo() {
+        formaCarregada = false;
         vertices.clear();
         operacoes.clear();
         atualizarLista();
